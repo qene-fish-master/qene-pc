@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e6eeee">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚掃雷">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>青魚掃雷</title>
+<link rel="stylesheet" href="qy.css">
+<style>
+.wrap{max-width:100%;overflow:auto;padding:4px;-webkit-overflow-scrolling:touch}
+#bd{display:grid;gap:2px;margin:0 auto;width:max-content;touch-action:manipulation}
+.c{width:var(--cs);height:var(--cs);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--cs)*.58);border-radius:4px;background:var(--ac);color:#fff;line-height:1;cursor:pointer;font-family:system-ui,sans-serif}
+.c.o{background:var(--cell);cursor:default;color:var(--ink)}
+.c.f::after{content:"🚩";font-size:calc(var(--cs)*.55)}
+.c.m{background:var(--bad)}.c.m::after{content:"💣";font-size:calc(var(--cs)*.55)}
+.c.m.o{background:var(--cell)}.c.m.o::after{content:"💣"}
+.c.x{background:#caa}.c.x::after{content:"❌";font-size:calc(var(--cs)*.5)}
+.c.hit{background:var(--bad)!important}
+.c.n1{color:#1f77d0}.c.n2{color:#2e9e4a}.c.n3{color:#d9534f}.c.n4{color:#8a5fe0}.c.n5{color:#c9772d}.c.n6{color:#17a2a2}.c.n7{color:#777}.c.n8{color:#999}
+.mid{font-size:30px;cursor:pointer;background:none;border:0;padding:0}
+</style>
+</head>
+<body>
+<header class="top"><a class="back" href="index.html">🐟 大廳</a><h1>掃雷</h1><button class="ib" id="bTheme" type="button">🌓</button></header>
+<div class="stats"><div class="stat"><small>剩餘地雷</small><b id="mc">10</b></div><div class="stat"><small>時間</small><b id="tm">000</b></div><div class="stat"><small>最佳</small><b id="bs">--</b></div></div>
+<div class="wrap" id="wrap"><div id="bd"></div></div>
+<div class="bar"><select id="lv" aria-label="難度"><option value="0">初級 9×9</option><option value="1">中級 12×12</option><option value="2">高級 16×16</option><option value="3">專家 16×24</option></select><button class="btn" id="bFlag" type="button">🚩 插旗模式:關</button><button class="btn p" id="bNew" type="button">新遊戲</button></div>
+<p class="tip" id="tp">點擊翻開・長按(或右鍵)插旗・點已翻開的數字可快速翻開周圍(需先插滿旗)</p>
+<script src="qy.js"></script>
+<script>
+const {$,LS}=QY,LV=[{r:9,c:9,m:10},{r:12,c:12,m:24},{r:16,c:16,m:40},{r:16,c:24,m:75}];
+let R,C,M,cells,mines,rev,flg,state='ready',left,timer=null,t0=0,flagMode=false,hit=-1,lv=+LS.get('qy.ms.lv',0)||0;
+if(!LV[lv])lv=0;$('#lv').value=lv;
+const bd=$('#bd');
+function bestKey(){return 'qy.best.ms'+lv}
+function cs(){
+ const avail=Math.min(innerWidth-24,560);
+ return Math.max(26,Math.min(40,Math.floor((avail-(C-1)*2-8)/C)));
+}
+function build(){
+ ({r:R,c:C,m:M}=LV[lv]);
+ mines=new Uint8Array(R*C);rev=new Uint8Array(R*C);flg=new Uint8Array(R*C);
+ state='ready';left=M;hit=-1;clearInterval(timer);timer=null;
+ bd.style.gridTemplateColumns='repeat('+C+',var(--cs))';
+ bd.style.setProperty('--cs',cs()+'px');
+ bd.innerHTML='';cells=[];
+ for(let i=0;i<R*C;i++){const d=document.createElement('div');d.className='c';d.dataset.i=i;bd.appendChild(d);cells.push(d)}
+ $('#tm').textContent='000';
+ const b=LS.get(bestKey(),null);$('#bs').textContent=b?b+'s':'--';
+ updMines();
+}
+function updMines(){$('#mc').textContent=left}
+function nb(i,f){
+ const r=i/C|0,c=i%C;
+ for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+  if(!dr&&!dc)continue;const rr=r+dr,cc=c+dc;
+  if(rr>=0&&rr<R&&cc>=0&&cc<C)f(rr*C+cc);
+ }
+}
+const num=i=>{let n=0;nb(i,j=>{n+=mines[j]});return n};
+function place(first){
+ const ban=new Set([first]);nb(first,j=>ban.add(j));
+ let pool=[];for(let i=0;i<R*C;i++)if(!ban.has(i))pool.push(i);
+ if(pool.length<M){pool=[];for(let i=0;i<R*C;i++)if(i!==first)pool.push(i)}
+ for(let k=pool.length-1;k>0;k--){const j=Math.random()*(k+1)|0;[pool[k],pool[j]]=[pool[j],pool[k]]}
+ for(let k=0;k<M;k++)mines[pool[k]]=1;
+}
+function paint(i){
+ const d=cells[i],n=rev[i]?num(i):0;
+ let c='c';
+ if(rev[i]){c+=' o';if(mines[i])c+=' m';else if(n)c+=' n'+n}
+ else if(flg[i])c+=' f';
+ d.className=c+(i===hit?' hit':'');
+ d.textContent=rev[i]&&!mines[i]&&n?n:'';
+}
+function reveal(i){
+ if(rev[i]||flg[i])return;
+ const st=[i];
+ while(st.length){
+  const k=st.pop();
+  if(rev[k]||flg[k])continue;
+  rev[k]=1;paint(k);
+  if(!mines[k]&&num(k)===0)nb(k,j=>{if(!rev[j]&&!flg[j])st.push(j)});
+ }
+}
+function start(){state='run';t0=Date.now();timer=setInterval(()=>{$('#tm').textContent=String(Math.min(999,(Date.now()-t0)/1000|0)).padStart(3,'0')},250)}
+function act(i){
+ if(state==='won'||state==='lost')return;
+ if(rev[i]){chord(i);return}
+ if(flagMode){toggle(i);return}
+ if(flg[i])return;
+ if(state==='ready'){place(i);start()}
+ if(mines[i]){lose(i);return}
+ reveal(i);check();
+}
+function chord(i){
+ const n=num(i);if(!n||mines[i])return;
+ let f=0;nb(i,j=>{f+=flg[j]});
+ if(f!==n)return;
+ let boom=-1;
+ nb(i,j=>{if(!rev[j]&&!flg[j]&&mines[j]&&boom<0)boom=j});
+ if(boom>=0){lose(boom);return}
+ nb(i,j=>reveal(j));check();
+}
+function toggle(i){
+ if(state==='won'||state==='lost'||rev[i])return;
+ if(flg[i]){flg[i]=0;left++}else{flg[i]=1;left--}
+ paint(i);updMines();
+}
+function lose(i){
+ state='lost';clearInterval(timer);hit=i;
+ for(let k=0;k<R*C;k++){
+  if(mines[k]&&!flg[k]){rev[k]=1}
+  else if(!mines[k]&&flg[k]){cells[k].className='c x';continue}
+  paint(k);
+ }
+ flagFace('💥 踩到地雷了,再試一次吧');
+}
+function check(){
+ let n=0;for(let k=0;k<R*C;k++)if(rev[k])n++;
+ if(n!==R*C-M)return;
+ state='won';clearInterval(timer);
+ for(let k=0;k<R*C;k++)if(mines[k]&&!flg[k]){flg[k]=1;paint(k)}
+ left=0;updMines();
+ const t=Math.max(1,Math.round((Date.now()-t0)/1000)),b=LS.get(bestKey(),null);
+ $('#tm').textContent=String(Math.min(999,t)).padStart(3,'0');
+ if(!b||t<b){LS.set(bestKey(),t);$('#bs').textContent=t+'s';flagFace('🎉 破紀錄!用時 '+t+' 秒')}
+ else flagFace('🎉 過關!用時 '+t+' 秒')
+}
+function flagFace(s){$('#tp').textContent=s}
+const DEF='點擊翻開・長按(或右鍵)插旗・點已翻開的數字可快速翻開周圍(需先插滿旗)';
+function fresh(){build();flagFace(DEF)}
+/* 輸入 */
+let lp=null,longed=false,pend=-1;
+bd.addEventListener('contextmenu',e=>e.preventDefault());
+bd.addEventListener('pointerdown',e=>{
+ const d=e.target.closest('.c');if(!d)return;
+ const i=+d.dataset.i;longed=false;clearTimeout(lp);lp=null;pend=-1;
+ if(e.pointerType==='mouse'){
+  if(e.button===2){e.preventDefault();toggle(i);longed=true;return}
+  if(e.button!==0)return;
+  pend=i;return;
+ }
+ pend=i;
+ lp=setTimeout(()=>{lp=null;longed=true;pend=-1;if(!rev[i])toggle(i);else chord(i);if(navigator.vibrate)try{navigator.vibrate(15)}catch(x){}},380);
+});
+bd.addEventListener('pointerup',e=>{
+ const d=e.target.closest('.c');
+ const p=pend;clearTimeout(lp);lp=null;pend=-1;
+ if(!d||p<0||longed||+d.dataset.i!==p)return;
+ if(e.pointerType==='mouse'&&e.button!==0)return;
+ act(p);
+});
+['pointerleave','pointercancel'].forEach(n=>bd.addEventListener(n,()=>{clearTimeout(lp);lp=null;pend=-1}));
+$('#bNew').onclick=fresh;
+$('#lv').onchange=()=>{lv=+$('#lv').value;LS.set('qy.ms.lv',lv);fresh()};
+$('#bFlag').onclick=()=>{flagMode=!flagMode;$('#bFlag').textContent='🚩 插旗模式:'+(flagMode?'開':'關');$('#bFlag').classList.toggle('on',flagMode)};
+addEventListener('resize',()=>bd.style.setProperty('--cs',cs()+'px'));
+fresh();
+</script>
+</body>
+</html>

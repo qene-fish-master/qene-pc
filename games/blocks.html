@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e6eeee">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚木塊拼圖">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>青魚木塊拼圖</title>
+<link rel="stylesheet" href="qy.css">
+<style>
+:root{--W:min(92vw,420px,calc(100dvh - 380px))}
+.bw{width:max(220px,var(--W));aspect-ratio:1;border-radius:10px;background:var(--line);padding:1.2%;touch-action:none}
+#bd{display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);gap:2px;width:100%;height:100%}
+.k{border-radius:12%;background:var(--cell)}
+.k.f{box-shadow:inset 0 -3px 0 #0003}
+.k.pv{outline:2px solid var(--ac);outline-offset:-2px;background:color-mix(in srgb,var(--ac) 45%,var(--cell))}
+.k.bad{background:color-mix(in srgb,var(--bad) 40%,var(--cell))}
+.k.ln{filter:brightness(1.25) saturate(1.2)}
+.k.cl{animation:cl .3s ease-out forwards}
+@keyframes cl{to{transform:scale(.2);opacity:0}}
+.tray{width:max(220px,var(--W));display:flex;gap:8px;margin-top:12px;touch-action:none}
+.slot{flex:1;height:calc(max(220px,var(--W)) / 10 * 3.2);display:flex;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--line);border-radius:12px;touch-action:none}
+.pcs{display:grid;gap:2px;cursor:grab;touch-action:none}
+.pcs.used{visibility:hidden}.pcs.dim{opacity:.35}
+.pcs div{width:var(--m);height:var(--m);border-radius:12%}
+.pcs .e{visibility:hidden}
+#ghost{position:fixed;z-index:50;pointer-events:none;display:none;gap:2px;opacity:.92}
+#ghost div{width:var(--g);height:var(--g);border-radius:12%}
+#ghost .e{visibility:hidden}
+</style>
+</head>
+<body>
+<header class="top"><a class="back" href="index.html">🐟 大廳</a><h1>木塊拼圖</h1><button class="ib" id="bTheme" type="button">🌓</button></header>
+<div class="stats"><div class="stat"><small>分數</small><b id="sc">0</b></div><div class="stat"><small>最高分</small><b id="bs">0</b></div></div>
+<div class="bw" id="bw"><div id="bd"></div>
+<div class="ov" id="ov"><h2>遊戲結束</h2><p id="ovP"></p><button class="btn p" id="ovA" type="button">再來一局</button></div></div>
+<div class="tray" id="tray"></div>
+<div id="ghost"></div>
+<div class="bar"><button class="btn p" id="bNew" type="button">新遊戲</button></div>
+<p class="tip">把方塊拖到棋盤上,填滿整列或整行即可消除。放不下任何方塊就結束。</p>
+<script src="qy.js"></script>
+<script>
+const {$,LS}=QY,N=10,KEY='qy.blocks',BK='qy.best.blocks';
+const SH=[
+ ['#'],['##'],['###'],['####'],['#####'],['#','#'],['#','#','#'],['#','#','#','#'],['#','#','#','#','#'],
+ ['##','##'],['###','###','###'],['###','###'],['##','##','##'],
+ ['#.','##'],['.#','##'],['##','#.'],['##','.#'],
+ ['#..','#..','###'],['..#','..#','###'],['###','#..','#..'],['###','..#','..#']
+].map(rows=>rows.map(r=>[...r].map(c=>c==='#'?1:0)));
+const COL=['#2a86b5','#3fa6c8','#e9c36a','#e39a3b','#2e9e6b','#8a5fe0','#d9534f','#5fbfcf'];
+let busyLock=false,g,pieces,score=0,best=+LS.get(BK,0)||0,over=false,combo=0,drag=null;
+const bd=$('#bd'),cellsEl=[],ghost=$('#ghost'),tray=$('#tray');
+for(let i=0;i<N*N;i++){const d=document.createElement('div');d.className='k';bd.appendChild(d);cellsEl.push(d)}
+const cw=()=>bd.clientWidth/N;
+function dims(p){return {h:p.s.length,w:p.s[0].length}}
+function fits(p,r,c){
+ for(let y=0;y<p.s.length;y++)for(let x=0;x<p.s[0].length;x++)
+  if(p.s[y][x]){const rr=r+y,cc=c+x;if(rr<0||cc<0||rr>=N||cc>=N||g[rr][cc])return false}
+ return true;
+}
+function canPlaceAny(p){for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(fits(p,r,c))return true;return false}
+function newPiece(){return {s:SH[Math.random()*SH.length|0],c:COL[Math.random()*COL.length|0],used:false}}
+function refill(){pieces=[newPiece(),newPiece(),newPiece()]}
+function drawBoard(){
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+  const d=cellsEl[r*N+c],v=g[r][c];
+  d.className='k'+(v?' f':'');d.style.background=v?v:'';
+ }
+}
+function mkGrid(el,p,size,cls){
+ const {h,w}=dims(p);
+ el.style.gridTemplateColumns='repeat('+w+',var('+size+'))';
+ el.innerHTML='';
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const d=document.createElement('div');
+  if(p.s[y][x]){d.style.background=p.c;d.style.boxShadow='inset 0 -3px 0 #0003'}else d.className='e';
+  el.appendChild(d);
+ }
+}
+function drawTray(){
+ const m=Math.max(10,Math.floor(cw()*.55));
+ tray.innerHTML='';
+ pieces.forEach((p,i)=>{
+  const s=document.createElement('div');s.className='slot';
+  const el=document.createElement('div');el.className='pcs'+(p.used?' used':'')+(!p.used&&over?' dim':'');
+  el.style.setProperty('--m',m+'px');el.dataset.i=i;
+  mkGrid(el,p,'--m');s.appendChild(el);tray.appendChild(s);
+ });
+ $('#sc').textContent=score;$('#bs').textContent=best;
+}
+function save(){LS.set(KEY,{g,pieces,score,over,combo})}
+function newGame(){
+ g=Array.from({length:N},()=>Array(N).fill(0));score=0;over=false;combo=0;
+ refill();$('#ov').classList.remove('show');drawBoard();drawTray();save();
+}
+function clearPv(){cellsEl.forEach(d=>d.classList.remove('pv','bad','ln'))}
+function target(e){
+ const R=bd.getBoundingClientRect(),c=cw(),p=drag.p,{h,w}=dims(p);
+ const gl=ghostPos(e,w*c+(w-1)*2,h*c+(h-1)*2);
+ return {col:Math.round((gl.x-R.left)/c),row:Math.round((gl.y-R.top)/c),gl};
+}
+function ghostPos(e,gw,gh){
+ const off=e.pointerType==='mouse'?0:Math.max(44,gh*.6+24);
+ return {x:e.clientX-gw/2,y:e.clientY-gh/2-off};
+}
+function show(e){
+ const t=target(e),p=drag.p;
+ ghost.style.left=t.gl.x+'px';ghost.style.top=t.gl.y+'px';
+ clearPv();
+ const ok=fits(p,t.row,t.col);
+ drag.t=ok?t:null;
+ // 預覽
+ for(let y=0;y<p.s.length;y++)for(let x=0;x<p.s[0].length;x++)if(p.s[y][x]){
+  const r=t.row+y,c=t.col+x;
+  if(r>=0&&c>=0&&r<N&&c<N&&ok)cellsEl[r*N+c].classList.add('pv');
+ }
+ if(ok){
+  // 預覽將消除的行列
+  const tmp=g.map(r=>r.slice());
+  for(let y=0;y<p.s.length;y++)for(let x=0;x<p.s[0].length;x++)if(p.s[y][x])tmp[t.row+y][t.col+x]=1;
+  for(let r=0;r<N;r++)if(tmp[r].every(v=>v))for(let c=0;c<N;c++)cellsEl[r*N+c].classList.add('ln');
+  for(let c=0;c<N;c++)if(tmp.every(row=>row[c]))for(let r=0;r<N;r++)cellsEl[r*N+c].classList.add('ln');
+ }
+}
+tray.addEventListener('pointerdown',e=>{
+ if(over||drag||busyLock)return;
+ if(e.pointerType==='mouse'&&e.button!==0)return;
+ const sl=e.target.closest('.slot'),el=sl&&sl.querySelector('.pcs');if(!el)return;
+ const i=+el.dataset.i,p=pieces[i];if(!p||p.used)return;
+ e.preventDefault();
+ drag={i,p,id:e.pointerId,el,t:null};
+ try{tray.setPointerCapture(e.pointerId)}catch(x){}
+ const c=cw();
+ mkGrid(ghost,p,'--g');ghost.style.setProperty('--g',c+'px');ghost.style.display='grid';
+ el.style.opacity='.25';
+ show(e);
+});
+tray.addEventListener('pointermove',e=>{if(drag&&e.pointerId===drag.id)show(e)});
+function endDrag(e,commit){
+ if(!drag||e.pointerId!==drag.id)return;
+ const d=drag;drag=null;
+ try{tray.releasePointerCapture(e.pointerId)}catch(x){}
+ ghost.style.display='none';clearPv();d.el.style.opacity='';
+ if(commit&&d.t)place(d.i,d.t.row,d.t.col);
+}
+tray.addEventListener('pointerup',e=>endDrag(e,true));
+tray.addEventListener('pointercancel',e=>endDrag(e,false));
+function place(i,row,col){
+ const p=pieces[i];let n=0;
+ for(let y=0;y<p.s.length;y++)for(let x=0;x<p.s[0].length;x++)if(p.s[y][x]){g[row+y][col+x]=p.c;n++}
+ p.used=true;
+ const fr=[],fc=[];
+ for(let r=0;r<N;r++)if(g[r].every(v=>v))fr.push(r);
+ for(let c=0;c<N;c++)if(g.every(row=>row[c]))fc.push(c);
+ const L=fr.length+fc.length;
+ let gain=n;
+ if(L){combo++;gain+=L*10*L+(combo>1?combo*5:0)}else combo=0;
+ score+=gain;
+ if(score>best){best=score;LS.set(BK,best)}
+ const clr=new Set();
+ fr.forEach(r=>{for(let c=0;c<N;c++)clr.add(r*N+c)});
+ fc.forEach(c=>{for(let r=0;r<N;r++)clr.add(r*N+c)});
+ drawBoard();
+ clr.forEach(k=>cellsEl[k].classList.add('cl'));
+ const fin=()=>{
+  clr.forEach(k=>{g[k/N|0][k%N]=0});
+  if(pieces.every(q=>q.used))refill();
+  drawBoard();
+  over=!pieces.some(q=>!q.used&&canPlaceAny(q));
+  drawTray();
+  if(over){$('#ovP').textContent='最終分數 '+score;$('#ov').classList.add('show')}
+  save();
+ };
+ if(clr.size){busyLock=true;setTimeout(()=>{busyLock=false;fin()},280)}else fin();
+ drawTray();
+}
+$('#bNew').onclick=newGame;$('#ovA').onclick=newGame;
+function load(){
+ const s=LS.get(KEY,null);
+ try{
+  if(s&&Array.isArray(s.g)&&s.g.length===N&&s.g.every(r=>Array.isArray(r)&&r.length===N)&&Array.isArray(s.pieces)&&s.pieces.length===3&&s.pieces.every(p=>p&&Array.isArray(p.s)&&p.s.length&&p.s.every(r=>Array.isArray(r)&&r.length===p.s[0].length))){
+   g=s.g;pieces=s.pieces;if(pieces.every(q=>q.used))refill();score=+s.score||0;combo=+s.combo||0;
+   over=!pieces.some(q=>!q.used&&canPlaceAny(q));
+   drawBoard();drawTray();
+   if(over){$('#ovP').textContent='最終分數 '+score;$('#ov').classList.add('show')}
+   return;
+  }
+ }catch(e){}
+ newGame();
+}
+addEventListener('resize',drawTray);
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#2f6fd6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚數獨">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>青魚數獨</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#e9eff8;--cell:#fff;--fg:#17212e;--ac:#2a63c4;--ut:#2a63c4;--thin:#cbd5e4;--thick:#34445e;--sel:#9fc0f7;--pe:#e1eafa;--sa:#c3d8fa;--er:#fde0e0;--ert:#d22f2f;--card:#fff;--z:1;--fz:1;--b0:max(240px,min(calc(100vw - 16px),calc(100vh - 330px),560px));--bs:calc(var(--b0)*var(--z))}
+@supports(height:100dvh){:root{--b0:max(240px,min(calc(100vw - 16px),calc(100dvh - 330px),560px))}}
+:root[data-z=s]{--z:.85}
+:root[data-z=l]{--z:1.15;--fz:1.12;--bs:max(var(--b0),min(calc(100vw - 8px),calc(100vh - 280px),calc(var(--b0)*var(--z))))}
+@supports(height:100dvh){:root[data-z=l]{--bs:max(var(--b0),min(calc(100vw - 8px),calc(100dvh - 280px),calc(var(--b0)*var(--z))))}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#111111;--cell:#181818;--fg:#f4f4f4;--ac:#06c755;--ut:#3ddc84;--thin:#2c2c2c;--thick:#8a8a8a;--sel:#0b7a43;--pe:#2a2a2a;--sa:#164d33;--er:#4d1f22;--ert:#ff6b6b;--card:#262626}}
+:root[data-theme=dark]{--bg:#111111;--cell:#181818;--fg:#f4f4f4;--ac:#06c755;--ut:#3ddc84;--thin:#2c2c2c;--thick:#8a8a8a;--sel:#0b7a43;--pe:#2a2a2a;--sa:#164d33;--er:#4d1f22;--ert:#ff6b6b;--card:#262626}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:16px system-ui,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation;overscroll-behavior:none}
+#app{height:100%;display:flex;flex-direction:column;align-items:center;padding:env(safe-area-inset-top) 8px env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;background:var(--card);border:0;border-radius:10px;padding:8px 12px;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+header{width:var(--bs);display:flex;align-items:center;gap:8px;padding:8px 0}
+#info{flex:1;display:flex;flex-direction:column;font-size:13px;line-height:1.35}
+#dif{font-weight:700}
+#tm{font-variant-numeric:tabular-nums;font-size:19px;font-weight:700}
+main{display:flex;flex-direction:column;align-items:center;gap:10px}
+#boardWrap{position:relative;width:var(--bs);height:var(--bs)}
+#board{display:grid;grid-template:repeat(9,1fr)/repeat(9,1fr);width:100%;height:100%;border:2px solid var(--thick);background:var(--cell);border-radius:6px;overflow:hidden}
+#board>div{display:flex;align-items:center;justify-content:center;border:.5px solid var(--thin);font-size:calc(var(--bs)/9*.58*var(--fz));color:var(--ut);cursor:pointer;background:var(--cell)}
+#board .gv{color:var(--fg);font-weight:700}
+#board .cr{border-right:2px solid var(--thick)}
+#board .rb{border-bottom:2px solid var(--thick)}
+#board .pe{background:var(--pe)}
+#board .sa{background:var(--sa)}
+#board .sel{background:var(--sel)}
+#board .er{background:var(--er);color:var(--ert)}
+.nt{display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);width:100%;height:100%;font-size:calc(var(--bs)/9*.24*var(--fz));color:var(--fg);opacity:.75}
+.nt i{font-style:normal;display:flex;align-items:center;justify-content:center}
+@keyframes pop{50%{transform:scale(1.18);background:var(--sel)}}
+#board .win{animation:pop .5s ease both;animation-delay:calc(var(--d)*35ms)}
+@media(prefers-reduced-motion:reduce){#board .win{animation:none}}
+#pauseO{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;line-height:1.6;background:var(--cell);border:2px solid var(--thick);border-radius:6px;font-size:22px;cursor:pointer}
+#pauseO.show{display:flex}
+#panel{display:flex;flex-direction:column;gap:10px;width:var(--bs)}
+#tools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#tools button{padding:7px 0;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:1px}
+#tools b{font-size:20px;font-weight:400}
+#tools .on{background:var(--ac);color:#fff}
+#pad{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+#pad button{padding:6px 0;font-size:calc(var(--bs)/9*.55);color:var(--ac);display:flex;flex-direction:column;align-items:center;line-height:1.1}
+#pad small{font-size:11px;color:var(--fg);opacity:.55;min-height:13px}
+#pad button:disabled{opacity:.25;cursor:default}
+@media(orientation:landscape) and (max-height:560px){
+:root{--b0:max(200px,min(calc(100vh - 64px),52vw))}
+@supports(height:100dvh){:root{--b0:max(200px,min(calc(100dvh - 64px),52vw))}}
+:root[data-z=l]{--bs:max(var(--b0),min(calc(100vh - 56px),54vw,calc(var(--b0)*var(--z))))}
+@supports(height:100dvh){:root[data-z=l]{--bs:max(var(--b0),min(calc(100dvh - 56px),54vw,calc(var(--b0)*var(--z))))}}
+header{width:100%;max-width:calc(var(--bs) + 330px)}
+main{flex-direction:row;align-items:center;gap:16px}
+#panel{width:min(300px,38vw)}
+#pad{grid-template-columns:repeat(3,1fr)}
+#pad button{font-size:22px;flex-direction:row;justify-content:center;gap:6px;padding:8px 0}
+}
+dialog{border:0;border-radius:16px;padding:20px;background:var(--card);color:var(--fg);width:min(88vw,340px)}
+dialog::backdrop{background:#000a}
+dialog h2{margin:0 0 6px;font-size:20px}
+dialog p{margin:6px 0;font-size:14px;line-height:1.5}
+dialog button{display:block;width:100%;margin:8px 0 0;background:var(--bg);padding:11px 12px;text-align:center}
+dialog button.p{background:var(--ac);color:#fff}
+dialog label{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+dialog input{font:inherit;padding:6px;border-radius:8px;border:1px solid var(--thin);background:var(--bg);color:var(--fg)}
+dialog table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+dialog td{padding:5px 0;border-bottom:1px solid var(--thin)}
+dialog td+td{text-align:right;font-variant-numeric:tabular-nums}
+dialog .hint{opacity:.65;font-size:12px}
+#home{position:fixed;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--bg);padding:20px}
+#home.show{display:flex}
+#home img{width:96px;height:96px;border-radius:24px}
+#home h1{margin:4px 0 0;font-size:30px;letter-spacing:.08em}
+#home p{margin:0 0 10px;opacity:.65;font-size:14px}
+#home .hb{width:min(86vw,320px);padding:16px;font-size:17px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+#home .hb.p{background:var(--ac);color:#fff}
+#home small{font-weight:400;opacity:.8;font-size:13px}
+.row2{display:flex;gap:10px;width:min(86vw,320px)}.row2 button{flex:1;padding:14px}
+dialog button.r{display:flex;justify-content:space-between}
+dialog .r span{color:var(--ac);font-weight:600}
+#toast{position:fixed;inset:auto auto calc(20px + env(safe-area-inset-bottom)) 50%;margin:0;border:0;overflow:visible;width:max-content;transform:translateX(-50%);background:#1b2433;color:#fff;padding:8px 14px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .2s;font-size:14px;z-index:99;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+
+#tut{position:fixed;inset:0;z-index:6;display:none;flex-direction:column;align-items:center;gap:12px;background:var(--bg);padding:calc(12px + env(safe-area-inset-top)) 20px calc(16px + env(safe-area-inset-bottom))}
+#tut.show{display:flex}
+#tut .tt{width:min(92vw,360px);display:flex;justify-content:space-between;align-items:center}
+#tut .tt span{opacity:.6;font-size:14px}
+#tut .tt button{padding:7px 14px;font-size:14px}
+#tut .tb{flex:1;min-height:0;width:min(92vw,360px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;overflow:auto}
+#tut h2{margin:0;font-size:24px}
+#tut p{margin:0;font-size:15px;line-height:1.65;opacity:.85}
+#tut .dots{display:flex;gap:8px}
+#tut .dots i{width:7px;height:7px;border-radius:50%;background:var(--thin)}
+#tut .dots i.on{background:var(--ac)}
+#tut .tn{display:flex;gap:10px;width:min(92vw,360px)}
+#tut .tn button{flex:1;padding:14px;font-weight:600;font-size:16px}
+#tut .tn button.p{background:var(--ac);color:#fff}
+.mg{display:grid;grid-template:repeat(9,1fr)/repeat(9,1fr);width:min(70vw,252px);aspect-ratio:1;border:2px solid var(--thick);border-radius:6px;overflow:hidden;background:var(--cell);flex:none}
+.mg div,.m3 div{display:flex;align-items:center;justify-content:center;border:.5px solid var(--thin);font-weight:700;color:var(--fg)}
+.mg div{font-size:15px}
+.mg .cr{border-right:2px solid var(--thick)}.mg .rb{border-bottom:2px solid var(--thick)}
+.mg .b{background:var(--pe)}.mg .h{background:var(--sa)}.mg .x{background:var(--sel)}
+.m3{display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);width:156px;aspect-ratio:1;border:2px solid var(--thick);border-radius:6px;overflow:hidden;background:var(--cell);flex:none}
+.m3 div{font-size:30px}.m3 .q{background:var(--sel);color:var(--ut)}
+.mr{display:flex;align-items:center;gap:14px;font-size:22px}
+.m1{width:64px;height:64px;border:2px solid var(--thick);border-radius:8px;background:var(--cell);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;color:var(--ut)}
+.m1.s{background:var(--sel)}
+.mp{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;width:min(86vw,330px)}
+.mp div{padding:8px 0;border-radius:8px;background:var(--card);color:var(--ac);font-size:20px}
+.mp div.on{background:var(--ac);color:#fff}
+.nn{display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);width:120px;height:120px;border:2px solid var(--thick);border-radius:8px;background:var(--cell);font-size:22px;font-weight:600;flex:none}
+.nn i{font-style:normal;display:flex;align-items:center;justify-content:center;opacity:.85}
+.tl{display:flex;flex-direction:column;gap:8px;width:min(86vw,330px)}
+.tl .li{display:flex;align-items:center;gap:14px;text-align:left;background:var(--card);border-radius:10px;padding:9px 14px;font-size:15px}
+.tl .li b{font-size:22px;font-weight:400;width:28px;text-align:center}
+.tl small{opacity:.65;font-size:12.5px}
+.row2 button{padding:14px 4px;font-size:15px}
+
+#home{overflow-y:auto;justify-content:flex-start}
+#home>:first-child{margin-top:auto}#home>:last-child{margin-bottom:auto}
+@media(max-height:520px){#home img{display:none}#home h1{margin-top:auto}#home{gap:8px;padding:12px}#home .hb{padding:12px 16px}}
+#lv{position:fixed;inset:0;z-index:6;display:none;flex-direction:column;align-items:center;gap:10px;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
+#lv.show{display:flex}
+#lv .lt{width:min(94vw,430px);display:flex;align-items:center;gap:10px;flex:none}
+#lv .lt b{flex:1;font-size:18px}
+#lv .lt button{padding:8px 14px;font-size:14px}
+#lv .lt span{font-size:12.5px;opacity:.75;text-align:right;line-height:1.35}
+#lv .lb{flex:1;min-height:0;width:min(94vw,430px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px}
+#lv h3{margin:14px 2px 8px;font-size:14px;opacity:.75;font-weight:600}
+#lv h3:first-child{margin-top:4px}
+.lg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lg button{aspect-ratio:1;border-radius:12px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:19px;font-weight:700;position:relative;line-height:1}
+.lg button small{font-size:10px;letter-spacing:-1px;color:#f2a900;min-height:11px}
+.lg button.cur{background:var(--ac);color:#fff}.lg button.cur small{color:#fff}
+.lg button:disabled{opacity:.35;cursor:default}
+.lg .bs::after{content:'👑';position:absolute;top:2px;right:3px;font-size:11px}
+.lg .end::after{content:'🏆'}
+#lv .lf{width:min(94vw,430px);flex:none}
+#lv .lf button{width:100%;padding:14px;font-size:16px;font-weight:600;background:var(--ac);color:#fff}
+dialog .stars{font-size:28px;letter-spacing:4px;text-align:center;color:#f2a900;margin:4px 0}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+<button id="bHome" aria-label="主頁">🏠</button>
+<div id="info"><span id="dif"></span><span id="mist"></span></div>
+<div id="tm">00:00</div>
+<button id="bPause" aria-label="暫停">⏸</button>
+<button id="bSet" aria-label="設定">⚙</button>
+</header>
+<main>
+<div id="boardWrap"><div id="board"></div><div id="pauseO">已暫停<br>點一下繼續</div></div>
+<div id="panel">
+<div id="tools">
+<button id="tU"><b>↶</b>復原</button>
+<button id="tE"><b>⌫</b>擦除</button>
+<button id="tN"><b>✎</b><span>筆記:關</span></button>
+<button id="tH"><b>💡</b>提示</button>
+</div>
+<div id="pad"></div>
+</div>
+</main>
+</div>
+<div id="home"></div>
+<div id="tut"></div>
+<div id="lv"></div>
+<dialog id="dlg"></dialog>
+<div id="toast" popover="manual"></div>
+<script>
+//CORE
+function pop(m){let k=0;while(m){m&=m-1;k++}return k}
+function shuffle(a,R){for(let i=a.length-1;i>0;i--){const j=R()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function dseed(d){let h=7;for(const ch of d)h=Math.imul(h,31)+ch.charCodeAt(0)|0;return h}
+function solve(g,limit,R){
+ const r=Array(9).fill(0),c=Array(9).fill(0),b=Array(9).fill(0),a=g.slice();
+ for(let i=0;i<81;i++)if(a[i]){const m=1<<a[i];r[i/9|0]|=m;c[i%9]|=m;b[(i/27|0)*3+(i%9/3|0)]|=m}
+ let n=0,first=null;
+ (function go(){
+  if(n>=limit)return;
+  let best=-1,bm=0,bc=10;
+  for(let i=0;i<81;i++)if(!a[i]){
+   const m=~(r[i/9|0]|c[i%9]|b[(i/27|0)*3+(i%9/3|0)])&0x3FE,k=pop(m);
+   if(k<bc){bc=k;best=i;bm=m;if(k<2)break}
+  }
+  if(best<0){n++;if(!first)first=a.slice();return}
+  if(bc===0)return;
+  const ro=best/9|0,co=best%9,bo=(ro/3|0)*3+(co/3|0),ds=[];
+  for(let d=1;d<=9;d++)if(bm>>d&1)ds.push(d);
+  if(R)shuffle(ds,R);
+  for(const d of ds){
+   const m=1<<d;a[best]=d;r[ro]|=m;c[co]|=m;b[bo]|=m;
+   go();
+   r[ro]&=~m;c[co]&=~m;b[bo]&=~m;a[best]=0;
+   if(n>=limit)return;
+  }
+ })();
+ return{n,first};
+}
+function okSol(s){
+ if(!Array.isArray(s)||s.length!==81)return false;
+ for(let u=0;u<9;u++){let a=0,b=0,c=0;
+  for(let k=0;k<9;k++){a|=1<<s[u*9+k];b|=1<<s[k*9+u];c|=1<<s[((u/3|0)*3+(k/3|0))*9+(u%3)*3+k%3]}
+  if(a!==0x3FE||b!==0x3FE||c!==0x3FE)return false}
+ return true;
+}
+const LV={easy:{n:'簡單',g:40},mid:{n:'中等',g:34},hard:{n:'困難',g:30},exp:{n:'專家',g:25}};
+function gen(diff,R){return genT(LV[diff].g,R)}
+function genT(t,R){
+ const s=solve(Array(81).fill(0),1,R).first,p=s.slice();let g=81;
+ for(const i of shuffle([...Array(81).keys()],R)){
+  if(g<=t)break;
+  const v=p[i];p[i]=0;
+  if(solve(p,2).n===1)g--;else p[i]=v;
+ }
+ return{p,s};
+}
+//ENDCORE
+
+const $=s=>document.querySelector(s);
+const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}};
+const SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const key=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>key(new Date());
+const fmt=t=>String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+const DD=['mid','easy','mid','hard','mid','hard','exp']; // 週日~週六的每日挑戰難度
+let S=Object.assign({played:0,won:0,best:{},streak:0,lastDaily:'',days:{}},LS('qy.s',{}));
+let C=Object.assign({theme:'auto',rem:{}},LS('qy.c',{}));
+C.rem=Object.assign({on:false,min:1200,last:'',done:''},C.rem);
+C.seen=!!C.seen;
+try{const t=localStorage.getItem('qy-theme');if(t!==null)C.theme=t==='light'||t==='dark'?t:'auto'}catch{}
+C.set=Object.assign({err:true,hl:true,same:true,auto:true,vib:true,lim:3,size:'m'},C.set);
+if(!['s','m','l'].includes(C.set.size))C.set.size='m';
+const saveC=()=>{SV('qy.c',C);try{localStorage.setItem('qy-theme',C.theme==='auto'?'':C.theme)}catch{}};
+const L={cur:1,st:{},bt:{}};
+(()=>{const o=LS('qy.l',{});if(!o||typeof o!=='object')return;
+ if(Number.isInteger(o.cur))L.cur=Math.min(100,Math.max(1,o.cur));
+ for(const k of Object.keys(o.st||{})){const n=+k,v=o.st[k];if(Number.isInteger(n)&&n>=1&&n<=100&&[1,2,3].includes(v)){L.st[n]=v;if(n+1>L.cur)L.cur=Math.min(100,n+1)}}
+ for(const k of Object.keys(o.bt||{})){const n=+k,v=o.bt[k];if(Number.isInteger(n)&&n>=1&&n<=100&&Number.isFinite(v)&&v>0)L.bt[n]=Math.floor(v)}
+})();
+const saveL=()=>SV('qy.l',L);
+let G=null,sel=-1,paused=false,noteMode=false,homeOn=true,tutOn=false,tutI=0,lvOn=false;
+const dlg=$('#dlg');
+
+const PE=[];
+for(let i=0;i<81;i++){const r=i/9|0,c=i%9,s=new Set();
+ for(let k=0;k<9;k++){s.add(r*9+k);s.add(k*9+c)}
+ for(let a=0;a<3;a++)for(let b=0;b<3;b++)s.add((r-r%3+a)*9+c-c%3+b);
+ s.delete(i);PE.push([...s]);}
+
+const bd=$('#board'),cells=[];
+for(let i=0;i<81;i++){const d=document.createElement('div');d.dataset.i=i;bd.appendChild(d);cells.push(d)}
+bd.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-i]');if(!t||!G)return;e.preventDefault();if(paused||dlg.open)return;sel=+t.dataset.i;render()});
+const pad=$('#pad'),padB=[];
+for(let d=1;d<=9;d++){const b=document.createElement('button');b.dataset.d=d;b.innerHTML=d+'<small></small>';pad.appendChild(b);padB.push(b)}
+pad.addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(b)put(+b.dataset.d)});
+
+function toast(m){const t=$('#toast');t.textContent=m;clearTimeout(toast.t);clearTimeout(toast.h);
+ try{if(t.showPopover&&!t.matches(':popover-open'))t.showPopover()}catch{}
+ t.classList.add('show');
+ toast.t=setTimeout(()=>{t.classList.remove('show');toast.h=setTimeout(()=>{try{if(t.hidePopover&&t.matches(':popover-open'))t.hidePopover()}catch{}},250)},1800)}
+function toastOff(){const t=$('#toast');clearTimeout(toast.t);clearTimeout(toast.h);t.classList.remove('show');try{if(t.hidePopover&&t.matches(':popover-open'))t.hidePopover()}catch{}}
+const canPlay=()=>G&&!G.done&&!paused&&!dlg.open&&!homeOn&&!tutOn&&!lvOn;
+
+function render(){
+ document.documentElement.dataset.theme=C.theme==='auto'?'':C.theme;
+ document.documentElement.dataset.z=C.set.size;
+ const dk=C.theme==='dark'||(C.theme==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);
+ $('meta[name=theme-color]').content=dk?'#111111':'#2f6fd6';
+ if(homeOn)renderHome();
+ $('#pauseO').classList.toggle('show',paused);
+ $('#tN').classList.toggle('on',noteMode);
+ $('#tN span').textContent='筆記:'+(noteMode?'開':'關');
+ if(!G)return;
+ const sv=sel>=0?G.v[sel]:0,sr=sel/9|0,sc=sel%9;
+ for(let i=0;i<81;i++){
+  const el=cells[i],v=G.v[i],r=i/9|0,c=i%9;let cl='';
+  if(c%3===2&&c<8)cl+=' cr';
+  if(r%3===2&&r<8)cl+=' rb';
+  if(G.p[i])cl+=' gv';
+  if(i===sel)cl+=' sel';
+  else if(C.set.hl&&sel>=0&&(r===sr||c===sc||((r/3|0)===(sr/3|0)&&(c/3|0)===(sc/3|0))))cl+=' pe';
+  if(C.set.same&&sv&&v===sv&&i!==sel)cl+=' sa';
+  if(C.set.err&&v&&v!==G.s[i])cl+=' er';
+  if(G.done===1)cl+=' win';
+  el.className=cl.trim();el.style.setProperty('--d',r+c);
+  if(v)el.textContent=v;
+  else if(G.n[i]){let h='<div class="nt">';for(let d=1;d<=9;d++)h+='<i>'+((G.n[i]>>d&1)?d:'')+'</i>';el.innerHTML=h+'</div>'}
+  else el.textContent='';
+ }
+ for(let d=1;d<=9;d++){let k=0;for(let i=0;i<81;i++)if(G.v[i]===d&&G.s[i]===d)k++;
+  padB[d-1].disabled=k>=9;padB[d-1].querySelector('small').textContent=k>=9?'':9-k}
+ $('#dif').textContent=G.ch?'挑戰 第 '+G.ch+' 關':(G.daily?'每日挑戰 ':'')+LV[G.diff].n;
+ $('#mist').textContent='錯誤 '+G.mist+(C.set.lim?'/'+C.set.lim:'');
+ $('#tm').textContent=fmt(G.t);
+ $('#bPause').textContent=paused?'▶':'⏸';
+}
+function save(){if(G)SV('qy.g',{...G,h:[]})}
+function push(){G.h.push([G.v.slice(),G.n.slice()]);if(G.h.length>100)G.h.shift()}
+function clearPeers(i,n){if(!C.set.auto)return;for(const p of PE[i])if(G.n[p]>>n&1)G.n[p]&=~(1<<n)}
+function after(){
+ save();render();
+ if(G.done)return;
+ if(C.set.lim&&G.mist>=C.set.lim)finish(false);
+ else if(G.v.every((v,i)=>v===G.s[i]))finish(true);
+}
+function put(n){
+ if(!canPlay()||sel<0||G.p[sel]||G.v[sel]===G.s[sel])return;
+ if(noteMode){
+  if(G.v[sel])return;
+  push();G.n[sel]^=1<<n;
+ }else{
+  if(G.v[sel]===n)return;
+  push();G.v[sel]=n;G.n[sel]=0;
+  if(n!==G.s[sel]){G.mist++;if(C.set.vib&&navigator.vibrate)navigator.vibrate(60)}else clearPeers(sel,n);
+ }
+ after();
+}
+function erase(){
+ if(!canPlay()||sel<0||G.p[sel]||G.v[sel]===G.s[sel]||!(G.v[sel]||G.n[sel]))return;
+ push();G.v[sel]=0;G.n[sel]=0;after();
+}
+function undo(){if(!canPlay()||!G.h.length)return;const[a,b]=G.h.pop();G.v=a;G.n=b;after()}
+function cand(k){let m=0;for(const p of PE[k])m|=1<<G.v[p];return 9-pop(m&0x3FE)}
+function hint(){
+ if(!canPlay())return;
+ let i=(sel>=0&&!G.p[sel]&&G.v[sel]!==G.s[sel])?sel:-1;
+ if(i<0){let bc=99;for(let k=0;k<81;k++)if(G.v[k]!==G.s[k]){const c=cand(k);if(c<bc){bc=c;i=k}}}
+ if(i<0)return;
+ push();sel=i;G.v[i]=G.s[i];G.n[i]=0;clearPeers(i,G.s[i]);G.hint++;G.t+=30;
+ toast('已填入提示,時間 +30 秒');after();
+}
+function finish(win){
+ G.done=win?1:2;
+ if(win){
+  S.won++;
+  if(G.ch){const n=G.ch,k=G.hint?1:G.mist?2:3;L.st[n]=Math.max(L.st[n]||0,k);if(!G.hint&&(!L.bt[n]||G.t<L.bt[n]))L.bt[n]=G.t;L.cur=Math.min(100,Math.max(L.cur,n+1));saveL()}
+  else{const b=S.best[G.diff];if(!G.hint&&(!b||G.t<b))S.best[G.diff]=G.t}
+  if(G.daily&&G.daily===today()&&!S.days[G.daily]){
+   S.days[G.daily]=1;const y=new Date();y.setDate(y.getDate()-1);
+   S.streak=S.lastDaily===key(y)?S.streak+1:1;S.lastDaily=G.daily;
+   C.rem.done=G.daily;saveC();pushCfg();
+  }
+ }
+ SV('qy.s',S);save();render();
+ const g0=G;
+ setTimeout(()=>{
+  if(G!==g0||G.done!==(win?1:2)||homeOn)return;
+  if(win&&G.ch)dlgShow(chWinH());
+  else if(!win&&G.ch)dlgShow('<h2>失敗</h2><p>錯誤已達 '+C.set.lim+' 次,再挑戰一次吧!</p><button class="p" data-a="restart">重玩這關</button><button data-a="chal">關卡列表</button>');
+  else if(win)dlgShow('<h2>🎉 完成!</h2><p>用時 '+fmt(G.t)+'・錯誤 '+G.mist+'・提示 '+G.hint+'</p>'+(G.daily?'<p>每日挑戰連續 '+streak()+' 天</p>':'')+'<button class="p" data-a="new">新遊戲</button><button data-a="home">回主頁</button>');
+  else dlgShow('<h2>失敗</h2><p>錯誤已達 '+C.set.lim+' 次。</p><button class="p" data-a="restart">重玩本局</button><button data-a="new">新遊戲</button>');
+ },win?1100:250);
+}
+function streak(){const y=new Date();y.setDate(y.getDate()-1);return(S.lastDaily===today()||S.lastDaily===key(y))?S.streak:0}
+let starting=false;
+function start(diff,dk,ch){
+ if(starting)return;starting=true;
+ if(dlg.open)dlg.close();
+ toast('生成謎題中…');
+ setTimeout(()=>{
+ try{
+  const R=ch?rng(dseed('ch'+ch)):dk?rng(dseed(dk)):Math.random,{p,s}=ch?genT(chClues(ch),R):gen(diff,R);
+  G={p,s,v:p.slice(),n:Array(81).fill(0),mist:0,hint:0,t:0,diff:ch?chTier(ch):diff,daily:dk||'',ch:ch||0,done:0,h:[]};
+  S.played++;SV('qy.s',S);sel=-1;paused=false;noteMode=false;lvHide();setHome(false);save();render();
+  toastOff();
+ }catch(e){toast('生成失敗,請再試一次')}
+ starting=false;
+ },30);
+}
+function loadG(){
+ const g=LS('qy.g',null);
+ if(!g||!okSol(g.s)||!LV[g.diff]||g.done)return null;
+ for(const a of[g.p,g.v,g.n])if(!Array.isArray(a)||a.length!==81)return null;
+ for(let i=0;i<81;i++){const p=g.p[i],v=g.v[i],n=g.n[i];
+  if(!Number.isInteger(p)||p<0||p>9||(p&&p!==g.s[i]))return null;
+  if(!Number.isInteger(v)||v<0||v>9||(p&&v!==p))return null;
+  if(!Number.isInteger(n)||n<0||n>1023)return null}
+ g.mist=Math.max(0,g.mist|0);
+ g.hint=Math.max(0,g.hint|0);g.t=Number.isFinite(g.t)&&g.t>=0?Math.floor(g.t):0;
+ g.daily=typeof g.daily==='string'?g.daily:'';g.h=[];
+ g.ch=Number.isInteger(g.ch)&&g.ch>=1&&g.ch<=L.cur?g.ch:0;
+ return g;
+}
+
+/* 對話框 */
+function dlgShow(h){dlg.innerHTML=h;if(!dlg.open)dlg.showModal()}
+const row=(a,l,v)=>'<button class="r" data-a="'+a+'">'+l+'<span'+(v==='關'?' style="opacity:.4"':'')+'>'+v+'</span></button>',oo=v=>v?'開':'關';
+function setH(){const s=C.set;return '<h2>設定</h2>'+row('theme','主題',{auto:'跟隨系統',light:'淺色',dark:'深色'}[C.theme])+row('tg:err','錯誤標紅',oo(s.err))+row('tg:hl','高亮同行列宮',oo(s.hl))+row('tg:same','高亮相同數字',oo(s.same))+row('tg:auto','自動清除筆記',oo(s.auto))+row('tg:vib','填錯時震動',oo(s.vib))+row('size','格子大小',{s:'小',m:'標準',l:'大'}[s.size])+row('lim','錯誤上限',s.lim?s.lim+' 次':'無限')+row('rem','每日提醒',oo(C.rem.on))+row('tut','新手教學','查看')+(G?'<button data-a="restart">重玩本局</button>':'')+'<button data-a="wipe">清除所有資料</button><button class="p" data-a="close">完成</button>'}
+function renderHome(){
+ const live=G&&!G.done,st=streak();
+ $('#home').innerHTML='<img src="icons/icon-192.png" alt=""><h1>青魚數獨</h1><p>'+(st?'每日挑戰連續 '+st+' 天':'無廣告・離線也能玩')+'</p>'
+ +(live?'<button class="hb p" data-a="resume">繼續遊戲<small>'+(G.ch?'挑戰 第'+G.ch+'關':(G.daily?'每日 ':'')+LV[G.diff].n)+' '+fmt(G.t)+'</small></button>':'')
+ +'<button class="hb" data-a="daily">每日挑戰<small>'+(S.days[today()]?'✓ 今日已完成':LV[DD[new Date().getDay()]].n)+'</small></button>'
+ +'<button class="hb" data-a="chal">挑戰模式<small>'+(L.st[100]?'🏆 已通關':'第 '+L.cur+' / 100 關')+'</small></button>'
+ +'<button class="hb'+(live?'':' p')+'" data-a="new">新遊戲</button>'
+ +'<button class="hb" data-a="lobby">🐟 遊戲大廳<small>五子棋</small></button>'
+ +'<div class="row2"><button data-a="stats">📊 統計</button><button data-a="tut">📖 教學</button><button data-a="settings">⚙ 設定</button></div>';
+}
+function setHome(v){homeOn=v;$('#home').classList.toggle('show',v);if(v)renderHome()}
+const isBusy=()=>G&&!G.done&&(G.t>0||G.v.some((v,i)=>v!==G.p[i]));
+function newH(){
+ const busy=isBusy();
+ return '<h2>新遊戲</h2>'+(busy?'<p>目前進度會被放棄。</p>':'')+Object.keys(LV).map(k=>'<button data-a="start:'+k+'">'+LV[k].n+'</button>').join('')+'<button data-a="close">返回</button>';
+}
+function statsH(){
+ const rate=S.played?Math.round(S.won/S.played*100):0;
+ return '<h2>統計</h2><table><tr><td>總場次</td><td>'+S.played+'</td></tr><tr><td>勝場</td><td>'+S.won+' ('+rate+'%)</td></tr><tr><td>每日挑戰連續</td><td>'+streak()+' 天</td></tr><tr><td>挑戰關卡</td><td>'+Object.keys(L.st).length+' / 100</td></tr>'+Object.keys(LV).map(k=>'<tr><td>最佳 '+LV[k].n+'</td><td>'+(S.best[k]?fmt(S.best[k]):'—')+'</td></tr>').join('')+'</table><p class="hint">最佳時間不計入使用過提示的對局。</p><button data-a="close">返回</button>';
+}
+function remH(){
+ const m=C.rem.min;
+ return '<h2>每日提醒</h2><p>每天提醒你完成當天的每日挑戰。</p><button class="p" data-a="remt">'+(C.rem.on?'✅ 已開啟(點擊關閉)':'開啟提醒')+'</button><label>提醒時間<input type="time" id="rt" value="'+String(m/60|0).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+'"></label><button data-a="rtest">發送測試通知</button><p class="hint">需先「加入主畫面」安裝並允許通知。App 開啟或在背景時最可靠;完全關閉時,是否準時送出取決於瀏覽器(Android Chrome 支援度較高,iPhone 須 iOS 16.4 以上)。</p><button data-a="settings">返回</button>';
+}
+const acts={
+ lobby(){location.href='index.html'},
+ close(){dlg.close()},
+ new(){dlgShow(newH())},
+ start(k){start(k)},
+ daily(){const k=today();if(G&&G.daily===k&&!G.done){setHome(false);paused=false;dlg.close();render();return}start(DD[new Date().getDay()],k)},
+ stats(){dlgShow(statsH())},
+ chal(){if(dlg.open)dlg.close();lvOpen()},
+ lvgo(x){const n=+x;if(!Number.isInteger(n)||n<1||n>L.cur)return;
+  if(G&&!G.done&&G.ch===n){lvHide();dlg.close();setHome(false);paused=false;render();return}
+  start(null,'',n)},
+ rem(){dlgShow(remH())},
+ theme(){C.theme={auto:'light',light:'dark',dark:'auto'}[C.theme];saveC();render();dlgShow(setH())},
+ settings(){dlgShow(setH())},
+ tut(){if(dlg.open)dlg.close();tutOpen()},
+ tg(k){C.set[k]=!C.set[k];saveC();render();dlgShow(setH())},
+ size(){C.set.size={m:'l',l:'s',s:'m'}[C.set.size];saveC();render();dlgShow(setH())},
+ lim(){C.set.lim=C.set.lim===3?5:C.set.lim===5?0:3;saveC();dlgShow(setH())},
+ resume(){if(G&&!G.done){paused=false;setHome(false);render()}},
+ home(){dlg.close();setHome(true)},
+ wipe(){dlgShow('<h2>清除所有資料?</h2><p>統計、存檔與設定都會刪除,無法復原。</p><button class="p" data-a="wipe2">確定清除</button><button data-a="settings">取消</button>')},
+ wipe2(){G=null;C.rem.on=false;pushCfg();for(const k of['qy.s','qy.c','qy.g','qy.l'])try{localStorage.removeItem(k)}catch{}setTimeout(()=>location.reload(),300)},
+ restart(){
+  if(!G)return;
+  Object.assign(G,{v:G.p.slice(),n:Array(81).fill(0),mist:0,hint:0,t:0,done:0,h:[]});
+  sel=-1;paused=false;noteMode=false;S.played++;SV('qy.s',S);save();setHome(false);dlg.close();render();
+ },
+ async remt(){
+  if(C.rem.on){C.rem.on=false;saveC();pushCfg();dlgShow(remH());return}
+  if(!INP&&!('Notification'in window)){toast('此瀏覽器不支援通知');return}
+  let p;if(INP)p='granted';else try{p=await Notification.requestPermission()}catch{p='denied'}
+  if(p!=='granted'){toast('尚未允許通知權限');return}
+  C.rem.on=true;C.rem.last='';saveC();pushCfg();
+  if(!INP)try{const r=await navigator.serviceWorker.ready;if(r.periodicSync)await r.periodicSync.register('daily',{minInterval:12*3600*1000})}catch{}
+  dlgShow(remH());chk();
+ },
+ async rtest(){
+  if(!canN()){toast('請先開啟提醒並允許通知');return}
+  notif('青魚數獨 🐟','這是測試通知。')
+ }
+};
+dlg.addEventListener('click',e=>{
+ if(e.target===dlg){const r=dlg.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dlg.close();return}
+ const b=e.target.closest('[data-a]');if(!b)return;
+ const[a,x]=b.dataset.a.split(':');if(acts[a])acts[a](x);
+});
+dlg.addEventListener('change',e=>{
+ if(e.target.id==='rt'&&e.target.value){const[h,m]=e.target.value.split(':');C.rem.min=h*60+ +m;C.rem.last='';saveC();pushCfg()}
+});
+dlg.addEventListener('close',render);
+
+/* 提醒 */
+const INP=window.parent!==window; // 在青魚手機裡執行時,通知顯示在手機畫面內,不送到真正的裝置
+const canN=()=>INP||('Notification'in window&&Notification.permission==='granted');
+function notif(t,b){
+ if(INP){try{parent.postMessage({qene:'notify',t:t,b:b},'*')}catch{}return}
+ const o={body:b,icon:'icons/icon-192.png',badge:'icons/icon-192.png',tag:'daily'};
+ if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(r=>r.showNotification(t,o)).catch(()=>{try{new Notification(t,o)}catch{}});
+ else{try{new Notification(t,o)}catch{}}
+}
+function pushCfg(){
+ if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(r=>r.active&&r.active.postMessage({cfg:INP?Object.assign({},C.rem,{on:false}):C.rem})).catch(()=>{});
+}
+function chk(){
+ const R=C.rem,k=today(),d=new Date();
+ if(!R.on||!canN())return;
+ if(R.last===k||S.days[k]||d.getHours()*60+d.getMinutes()<R.min)return;
+ R.last=k;saveC();pushCfg();
+ notif('青魚數獨 🐟','今天的每日挑戰在等你,來玩一局吧!');
+}
+
+/* 挑戰模式 */
+const CH=['小溪','池塘','河川','湖泊','瀑布','峽谷','海灣','淺海','深海','海溝'],TIER=['入門','簡單','中等','困難','專家'];
+const chClues=n=>Math.round(46-21*(n-1)/99)-(n%10===0?2:0);
+const chTier=n=>n<=25?'easy':n<=55?'mid':n<=85?'hard':'exp';
+const starS=k=>'★'.repeat(k)+'☆'.repeat(3-k);
+function lvDraw(){
+ const tot=Object.values(L.st).reduce((a,b)=>a+b,0);
+ let h='<div class="lt"><button data-l="back">‹ 返回</button><b>挑戰模式</b><span>通關 '+Object.keys(L.st).length+' / 100<br>★ '+tot+' / 300</span></div><div class="lb">';
+ for(let c=0;c<10;c++){
+  h+='<h3>第 '+(c+1)+' 章・'+CH[c]+'(第 '+(c*10+1)+'–'+(c*10+10)+' 關)</h3><div class="lg">';
+  for(let k=1;k<=10;k++){const n=c*10+k,un=n<=L.cur,st=L.st[n]||0;
+   h+='<button data-l="'+n+'"'+(un?'':' disabled')+' class="'+(n===L.cur&&!st?'cur':'')+(k===10?(n===100?' bs end':' bs'):'')+'">'+n+'<small>'+(un?(st?starS(st):''):'🔒')+'</small></button>'}
+  h+='</div>'}
+ $('#lv').innerHTML=h+'</div><div class="lf"><button data-l="go">'+(L.st[100]?'🏆 已通關・再玩一次':'繼續:第 '+L.cur+' 關')+'</button></div>';
+}
+function lvOpen(){lvOn=true;lvDraw();$('#lv').classList.add('show');const e=$('#lv .cur')||$('#lv [data-l="'+L.cur+'"]');if(e)e.scrollIntoView({block:'center'})}
+function lvHide(){lvOn=false;$('#lv').classList.remove('show')}
+function lvInfo(n){
+ if(!Number.isInteger(n)||n<1||n>L.cur)return;
+ const st=L.st[n]||0,same=G&&!G.done&&G.ch===n;
+ dlgShow('<h2>第 '+n+' 關'+(n===100?' 🏆':n%10===0?' 👑':'')+'</h2><p>第 '+Math.ceil(n/10)+' 章・'+CH[Math.ceil(n/10)-1]+'・難度:'+TIER[Math.ceil(n/20)-1]+(n%10===0?'(Boss 關)':'')+'</p>'
+  +'<p>'+(st?'最高 <span style="color:#f2a900">'+starS(st)+'</span>'+(L.bt[n]?'・最佳 '+fmt(L.bt[n]):''):'尚未通關')+'</p>'
+  +(!same&&isBusy()?'<p>目前進度會被放棄。</p>':'')
+  +'<button class="p" data-a="lvgo:'+n+'">'+(same?'繼續':'開始')+'</button><button data-a="close">返回</button>');
+}
+function chWinH(){
+ const n=G.ch,k=G.hint?1:G.mist?2:3,tot=Object.values(L.st).reduce((a,b)=>a+b,0);
+ if(n===100)return '<h2>🏆 恭喜通關!</h2><p>你完成了全部 100 關,太厲害了!</p><div class="stars">'+starS(k)+'</div><p>總星數 '+tot+' / 300</p><p class="hint">還沒拿滿星?回到關卡列表重挑戰吧。</p><button class="p" data-a="chal">關卡列表</button><button data-a="home">回主頁</button>';
+ return '<h2>🎉 第 '+n+' 關完成!</h2><div class="stars">'+starS(k)+'</div><p>用時 '+fmt(G.t)+'・錯誤 '+G.mist+'・提示 '+G.hint+'</p>'+(k<3?'<p class="hint">三星條件:不使用提示且零錯誤。</p>':'')
+  +'<button class="p" data-a="lvgo:'+(n+1)+'">下一關</button><button data-a="restart">重玩這關</button><button data-a="chal">關卡列表</button>';
+}
+$('#lv').addEventListener('click',e=>{const b=e.target.closest('[data-l]');if(!b||b.disabled)return;const a=b.dataset.l;
+ if(a==='back')lvHide();else if(a==='go')lvInfo(L.cur);else lvInfo(+a)});
+addEventListener('keydown',e=>{if(lvOn&&!dlg.open&&e.key==='Escape')lvHide()});
+
+/* 教學 */
+const mg=(f)=>{let h='<div class="mg">';for(let i=0;i<81;i++){const r=i/9|0,c=i%9;let k=[];
+ if(c%3===2&&c<8)k.push('cr');if(r%3===2&&r<8)k.push('rb');
+ if(r>=3&&r<=5&&c>=3&&c<=5)k.push('b');if(r===4||c===4)k.push('h');if(r===4&&c===4)k.push('x');
+ h+='<div class="'+k.join(' ')+'">'+f(r,c)+'</div>'}return h+'</div>'};
+const ROW=[5,3,8,1,9,2,7,4,6];
+const TUT=[
+{t:'目標:每格填 1~9',p:'每一橫列、每一直行、每個粗線框起來的 3×3 宮格,都要剛好填入 1~9,而且不能重複。',h:mg((r,c)=>r===4?ROW[c]:'')},
+{t:'怎麼填數字',p:'先點一個空格,再點下方的數字。題目給的數字不能改,你自己填的會用不同顏色顯示。',
+ h:'<div class="mr"><div class="m1 s"></div><span>→</span><div class="m1">5</div></div><div class="mp">'+[1,2,3,4,5,6,7,8,9].map(d=>'<div'+(d===5?' class="on"':'')+'>'+d+'</div>').join('')+'</div>'},
+{t:'找出唯一的答案',p:'這個宮格已經有 1~8,只缺 9,所以問號那格一定是 9。先從「只剩一種可能」的格子開始找最容易。',
+ h:'<div class="m3">'+[5,3,1,8,'?',2,7,4,6].map(d=>'<div'+(d==='?'?' class="q"':'')+'>'+d+'</div>').join('')+'</div>'},
+{t:'不確定?用筆記',p:'點「✎ 筆記」開啟後再點數字,會在格子裡記下可能的候選數字。填入正確答案後,同行列宮的筆記會自動清掉(可在設定關閉)。',
+ h:'<div class="nn">'+[1,2,3,4,5,6,7,8,9].map(d=>'<i>'+([2,5,7].includes(d)?d:'')+'</i>').join('')+'</div>'},
+{t:'好用的小工具',p:'卡關時別硬猜,善用這些功能。',
+ h:'<div class="tl"><div class="li"><b>↶</b><span>復原<br><small>退回上一步</small></span></div><div class="li"><b>⌫</b><span>擦除<br><small>清掉選取格的數字或筆記</small></span></div><div class="li"><b>💡</b><span>提示<br><small>自動填入一格,時間 +30 秒</small></span></div><div class="li"><b>⚠</b><span>錯誤上限<br><small>預設錯 3 次就失敗,可在設定調整</small></span></div></div>'},
+{t:'準備好了!',p:'主頁的「挑戰模式」要一關一關闖到第 100 關;「每日挑戰」每天有新題目,連續完成還會累積天數。想複習時,隨時可以從主頁或設定重看教學。',h:'<div style="font-size:72px;line-height:1">🐟</div>'}
+];
+function tutDraw(){
+ const P=TUT[tutI],last=tutI===TUT.length-1;
+ $('#tut').innerHTML='<div class="tt"><span>'+(tutI+1)+' / '+TUT.length+'</span><button data-t="skip">跳過教學</button></div>'
+ +'<div class="tb">'+P.h+'<h2>'+P.t+'</h2><p>'+P.p+'</p></div>'
+ +'<div class="dots">'+TUT.map((_,i)=>'<i'+(i===tutI?' class="on"':'')+'></i>').join('')+'</div>'
+ +'<div class="tn">'+(tutI?'<button data-t="prev">上一步</button>':'')+'<button class="p" data-t="'+(last?'done':'next')+'">'+(last?'開始玩':'下一步')+'</button></div>';
+}
+function tutOpen(){tutOn=true;tutI=0;tutDraw();$('#tut').classList.add('show')}
+function tutClose(){tutOn=false;C.seen=true;saveC();$('#tut').classList.remove('show');render()}
+const tutGo=d=>{if(!tutOn)return;const n=tutI+d;if(n<0)return;if(n>=TUT.length){tutClose();return}tutI=n;tutDraw()};
+$('#tut').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;const a=b.dataset.t;
+ if(a==='skip'||a==='done')tutClose();else if(a==='next')tutGo(1);else if(a==='prev')tutGo(-1)});
+addEventListener('keydown',e=>{if(!tutOn)return;
+ if(e.key==='Escape')tutClose();else if(e.key==='ArrowRight')tutGo(1);else if(e.key==='ArrowLeft')tutGo(-1)});
+
+/* 操作綁定 */
+$('#bHome').onclick=()=>setHome(true);$('#bSet').onclick=()=>dlgShow(setH());
+$('#home').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const[a,x]=b.dataset.a.split(':');if(acts[a])acts[a](x)});
+$('#bPause').onclick=()=>{if(!G||G.done)return;paused=!paused;render()};
+$('#pauseO').onclick=()=>{paused=false;render()};
+$('#tU').onclick=undo;$('#tE').onclick=erase;$('#tH').onclick=hint;
+const toggleNote=()=>{noteMode=!noteMode;render()};
+$('#tN').onclick=toggleNote;
+addEventListener('keydown',e=>{
+ if(!G||dlg.open||homeOn||tutOn||lvOn||e.ctrlKey||e.metaKey||e.altKey)return;
+ const k=e.key;
+ if(/^[1-9]$/.test(k))put(+k);
+ else if(k==='Backspace'||k==='Delete')erase();
+ else if(k==='n'||k==='N')toggleNote();
+ else if(k==='h'||k==='H')hint();
+ else if(k==='z'||k==='Z')undo();
+ else if(k.startsWith('Arrow')&&!paused){
+  e.preventDefault();const s=sel<0?40:sel,r=s/9|0,c=s%9;
+  const nr=Math.max(0,Math.min(8,r+(k==='ArrowDown')-(k==='ArrowUp'))),nc=Math.max(0,Math.min(8,c+(k==='ArrowRight')-(k==='ArrowLeft')));
+  sel=nr*9+nc;render();
+ }
+});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){if(G&&!G.done)paused=true;save();render()}else chk();
+});
+addEventListener('pagehide',save);
+try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>render())}catch{}
+setInterval(()=>{
+ if(G&&!G.done&&!paused&&!dlg.open&&!homeOn&&!tutOn&&!lvOn&&!document.hidden){G.t++;$('#tm').textContent=fmt(G.t);if(G.t%5===0)save()}
+},1000);
+setInterval(chk,60000);
+
+/* 啟動 */
+setHome(true);
+G=loadG();
+render();
+chk();
+if(!C.seen&&!S.played)tutOpen();
+if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(pushCfg).catch(()=>{}));
+</script>
+</body>
+</html>

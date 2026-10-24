@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e6eeee">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚遊戲">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>青魚遊戲</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#e6eeee;--ink:#12303a;--mute:#4f6a72;--card:#fbfdfc;--line:#c3d4d4;--ac:#1f6f8b;--wood:#c98f4e;--wood2:#a8723a;--cream:#f5ecd5;--st:#e9c36a}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1d24;--ink:#e9efe9;--mute:#8fa8ae;--card:#152a33;--line:#27424c;--ac:#5fb3d0;--wood:#b9824a;--wood2:#8e5f31}}
+:root[data-theme=dark]{--bg:#0e1d24;--ink:#e9efe9;--mute:#8fa8ae;--card:#152a33;--line:#27424c;--ac:#5fb3d0;--wood:#b9824a;--wood2:#8e5f31}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:calc(20px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+header{display:flex;align-items:center;gap:14px;width:min(100%,760px);margin-bottom:18px}
+header img{width:64px;height:64px;border-radius:16px;flex:none;box-shadow:0 2px 10px #0003}
+h1{margin:0;font-size:32px;line-height:1.1;letter-spacing:.14em;font-weight:800}
+header p{margin:4px 0 0;color:var(--mute);font-size:14px}
+main{width:min(100%,760px);display:grid;grid-template-columns:1fr;gap:14px;flex:1;align-content:center}
+@media(min-width:620px){main{grid-template-columns:1fr 1fr}}
+.g{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--line);color:inherit;text-decoration:none;transition:transform .15s,border-color .15s}
+.g:hover{border-color:var(--ac)}.g:active{transform:scale(.985)}
+.g:focus-visible,.bar button:focus-visible{outline:3px solid var(--ac);outline-offset:3px}
+.art{display:block;width:100%;aspect-ratio:2/1;border-radius:12px;background:var(--wood)}
+.g h2{margin:0;font-size:22px;letter-spacing:.08em}
+.g .sub{margin:2px 0 0;color:var(--mute);font-size:14px}
+.go{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:12px;background:var(--ac);color:#fff;font-weight:700;font-size:16px}
+.go small{font-weight:500;opacity:.9;font-size:13px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+.bar button{font:inherit;font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer}
+.bar button:hover{border-color:var(--ac)}
+</style>
+</head>
+<body>
+<header>
+<img src="icons/icon-192.png" alt="">
+<div><h1>青魚遊戲</h1><p>9 款小遊戲・無廣告・離線也能玩</p></div>
+</header>
+<main>
+<a class="g" id="gSudoku" href="sudoku.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="數獨盤面" preserveAspectRatio="xMidYMid slice">
+<rect width="200" height="100" fill="#c98f4e"/>
+<g transform="translate(50 0)">
+<rect x="2" y="2" width="96" height="96" rx="4" fill="#f5ecd5"/>
+<g stroke="#a8723a" stroke-width="1.5"><path d="M34 2v96M66 2v96M2 34h96M2 66h96"/></g>
+<rect x="2" y="2" width="96" height="96" rx="4" fill="none" stroke="#5a3d12" stroke-width="2.5"/>
+<g font-family="Georgia,serif" font-size="17" font-weight="700" fill="#5a3d12" text-anchor="middle">
+<text x="18" y="25">5</text><text x="50" y="25" fill="#1f6f8b">3</text><text x="82" y="57">7</text>
+<text x="18" y="57" fill="#1f6f8b">8</text><text x="50" y="89">1</text><text x="82" y="89">9</text>
+</g>
+</g>
+</svg>
+<div><h2>青魚數獨</h2><p class="sub" id="sudokuSub">每日挑戰・100 關挑戰模式</p></div>
+<div class="go"><span id="sudokuGo">開始玩</span><small id="sudokuNote"></small></div>
+</a>
+<a class="g" id="gGomoku" href="gomoku.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="五子棋盤面" preserveAspectRatio="xMidYMid slice">
+<rect width="200" height="100" fill="#c98f4e"/>
+<g stroke="#5a3d12" stroke-width="1" opacity=".85">
+<path d="M10 14h180M10 32h180M10 50h180M10 68h180M10 86h180M28 6v88M56 6v88M84 6v88M112 6v88M140 6v88M168 6v88"/>
+</g>
+<g>
+<circle cx="84" cy="50" r="8" fill="#161616"/><circle cx="112" cy="50" r="8" fill="#f5f5f0" stroke="#bbb" stroke-width=".6"/>
+<circle cx="112" cy="68" r="8" fill="#161616"/><circle cx="84" cy="68" r="8" fill="#f5f5f0" stroke="#bbb" stroke-width=".6"/>
+<circle cx="140" cy="86" r="8" fill="#161616"/><circle cx="56" cy="32" r="8" fill="#f5f5f0" stroke="#bbb" stroke-width=".6"/>
+<circle cx="140" cy="68" r="2.6" fill="#d33"/>
+</g>
+</svg>
+<div><h2>青魚五子棋</h2><p class="sub">15×15・連珠禁手・電腦對弈</p></div>
+<div class="go"><span>開始玩</span><small>珠型・技能模式</small></div>
+</a>
+<a class="g" id="g_g2048" href="g2048.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="青魚 2048" preserveAspectRatio="xMidYMid slice"><rect width="200" height="100" fill="#c98f4e"/><rect x="14" y="28" width="40" height="44" rx="5" fill="#eef4f2"/><text x="34.0" y="55.25" font-size="15" font-weight="800" fill="#12303a" text-anchor="middle" font-family="system-ui,sans-serif">2</text><rect x="60" y="28" width="40" height="44" rx="5" fill="#8fd0bf"/><text x="80.0" y="55.25" font-size="15" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">8</text><rect x="106" y="28" width="40" height="44" rx="5" fill="#e9c36a"/><text x="126.0" y="55.25" font-size="15" font-weight="800" fill="#3a2a08" text-anchor="middle" font-family="system-ui,sans-serif">128</text><rect x="152" y="28" width="40" height="44" rx="5" fill="#d9534f"/><text x="172.0" y="55.25" font-size="15" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">2048</text></svg>
+<div><h2>青魚 2048</h2><p class="sub">滑動合併・挑戰 2048</p></div>
+<div class="go"><span>開始玩</span><small id="n_g2048">可復原・自動存檔</small></div>
+</a>
+<a class="g" id="g_g2248" href="g2248.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="青魚 2248" preserveAspectRatio="xMidYMid slice"><rect width="200" height="100" fill="#c98f4e"/><rect x="20" y="10" width="28" height="24" rx="5" fill="#8fd0bf"/><text x="34.0" y="26.55" font-size="13" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">8</text><rect x="52" y="10" width="28" height="24" rx="5" fill="#eef4f2"/><text x="66.0" y="26.55" font-size="13" font-weight="800" fill="#12303a" text-anchor="middle" font-family="system-ui,sans-serif">2</text><rect x="84" y="10" width="28" height="24" rx="5" fill="#3fa6c8"/><text x="98.0" y="26.55" font-size="13" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">32</text><rect x="116" y="10" width="28" height="24" rx="5" fill="#e9c36a"/><text x="130.0" y="26.55" font-size="13" font-weight="800" fill="#3a2a08" text-anchor="middle" font-family="system-ui,sans-serif">64</text><rect x="148" y="10" width="28" height="24" rx="5" fill="#eef4f2"/><text x="162.0" y="26.55" font-size="13" font-weight="800" fill="#12303a" text-anchor="middle" font-family="system-ui,sans-serif">4</text><rect x="20" y="37" width="28" height="24" rx="5" fill="#eef4f2"/><text x="34.0" y="53.55" font-size="13" font-weight="800" fill="#12303a" text-anchor="middle" font-family="system-ui,sans-serif">4</text><rect x="52" y="37" width="28" height="24" rx="5" fill="#5fbfcf"/><text x="66.0" y="53.55" font-size="13" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">16</text><rect x="84" y="37" width="28" height="24" rx="5" fill="#5fbfcf"/><text x="98.0" y="53.55" font-size="13" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">16</text><rect x="116" y="37" width="28" height="24" rx="5" fill="#5fbfcf"/><text x="130.0" y="53.55" font-size="13" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">16</text><rect x="148" y="37" width="28" height="24" rx="5" fill="#8fd0bf"/><text x="162.0" y="53.55" font-size="13" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">8</text><rect x="20" y="64" width="28" height="24" rx="5" fill="#eef4f2"/><text x="34.0" y="80.55" font-size="13" font-weight="800" fill="#12303a" text-anchor="middle" font-family="system-ui,sans-serif">2</text><rect x="52" y="64" width="28" height="24" rx="5" fill="#e9c36a"/><text x="66.0" y="80.55" font-size="13" font-weight="800" fill="#3a2a08" text-anchor="middle" font-family="system-ui,sans-serif">64</text><rect x="84" y="64" width="28" height="24" rx="5" fill="#8fd0bf"/><text x="98.0" y="80.55" font-size="13" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">8</text><rect x="116" y="64" width="28" height="24" rx="5" fill="#eef4f2"/><text x="130.0" y="80.55" font-size="13" font-weight="800" fill="#12303a" text-anchor="middle" font-family="system-ui,sans-serif">2</text><rect x="148" y="64" width="28" height="24" rx="5" fill="#3fa6c8"/><text x="162.0" y="80.55" font-size="13" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">32</text><polyline points="34,35 66,35 98,35 130,35" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<div><h2>青魚 2248</h2><p class="sub">連線相同數字・合併升級</p></div>
+<div class="go"><span>開始玩</span><small id="n_g2248">拖曳連線</small></div>
+</a>
+<a class="g" id="g_snake" href="snake.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="青魚貪吃蛇" preserveAspectRatio="xMidYMid slice"><rect width="200" height="100" fill="#cfdede"/><path d="M20 70 H100 V30 H150 V60" fill="none" stroke="#2a86b5" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><circle cx="150" cy="60" r="8" fill="#1f6f8b"/><circle cx="148" cy="58" r="2" fill="#fff"/><circle cx="154" cy="58" r="2" fill="#fff"/><circle cx="175" cy="25" r="8" fill="#e9c36a"/><circle cx="175" cy="25" r="4" fill="#d9534f"/></svg>
+<div><h2>青魚貪吃蛇</h2><p class="sub">三種速度・可選穿牆</p></div>
+<div class="go"><span>開始玩</span><small id="n_snake">方向鍵・滑動</small></div>
+</a>
+<a class="g" id="g_minesweeper" href="minesweeper.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="青魚掃雷" preserveAspectRatio="xMidYMid slice"><rect width="200" height="100" fill="#c98f4e"/><rect x="50" y="6" width="100" height="88" rx="6" fill="#1f6f8b"/><rect x="56" y="12" width="21" height="24" rx="3" fill="#cfdede"/><rect x="79" y="12" width="21" height="24" rx="3" fill="#cfdede"/><text x="89.5" y="29" font-size="14" font-weight="800" fill="#1f77d0" text-anchor="middle" font-family="system-ui">1</text><rect x="102" y="12" width="21" height="24" rx="3" fill="#5fb3d0"/><rect x="125" y="12" width="21" height="24" rx="3" fill="#5fb3d0"/><rect x="56" y="38" width="21" height="24" rx="3" fill="#cfdede"/><text x="66.5" y="55" font-size="14" font-weight="800" fill="#1f77d0" text-anchor="middle" font-family="system-ui">1</text><rect x="79" y="38" width="21" height="24" rx="3" fill="#cfdede"/><text x="89.5" y="55" font-size="14" font-weight="800" fill="#2e9e4a" text-anchor="middle" font-family="system-ui">2</text><rect x="102" y="38" width="21" height="24" rx="3" fill="#5fb3d0"/><text x="112.5" y="55" font-size="13" text-anchor="middle">🚩</text><rect x="125" y="38" width="21" height="24" rx="3" fill="#5fb3d0"/><rect x="56" y="64" width="21" height="24" rx="3" fill="#cfdede"/><rect x="79" y="64" width="21" height="24" rx="3" fill="#cfdede"/><text x="89.5" y="81" font-size="14" font-weight="800" fill="#1f77d0" text-anchor="middle" font-family="system-ui">1</text><rect x="102" y="64" width="21" height="24" rx="3" fill="#5fb3d0"/><rect x="125" y="64" width="21" height="24" rx="3" fill="#5fb3d0"/><text x="135.5" y="81" font-size="13" text-anchor="middle">💣</text></svg>
+<div><h2>青魚掃雷</h2><p class="sub">四種難度・長按插旗</p></div>
+<div class="go"><span>開始玩</span><small id="n_minesweeper">首擊保證安全</small></div>
+</a>
+<a class="g" id="g_slide" href="slide.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="青魚滑動拼圖" preserveAspectRatio="xMidYMid slice"><rect width="200" height="100" fill="#c98f4e"/><rect x="62" y="8" width="24" height="26" rx="5" fill="#2a86b5"/><text x="74.0" y="25.9" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">1</text><rect x="88" y="8" width="24" height="26" rx="5" fill="#2a86b5"/><text x="100.0" y="25.9" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">2</text><rect x="114" y="8" width="24" height="26" rx="5" fill="#2a86b5"/><text x="126.0" y="25.9" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">3</text><rect x="62" y="36" width="24" height="26" rx="5" fill="#2a86b5"/><text x="74.0" y="53.9" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">4</text><rect x="88" y="36" width="24" height="26" rx="5" fill="#2e9e6b"/><text x="100.0" y="53.9" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">5</text><rect x="114" y="36" width="24" height="26" rx="5" fill="#2a86b5"/><text x="126.0" y="53.9" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">6</text><rect x="62" y="64" width="24" height="26" rx="5" fill="#2a86b5"/><text x="74.0" y="81.9" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">7</text><rect x="88" y="64" width="24" height="26" rx="5" fill="#2a86b5"/><text x="100.0" y="81.9" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="system-ui,sans-serif">8</text></svg>
+<div><h2>青魚滑動拼圖</h2><p class="sub">3×3 ~ 5×5 數字華容道</p></div>
+<div class="go"><span>開始玩</span><small id="n_slide">記錄最少步數</small></div>
+</a>
+<a class="g" id="g_blocks" href="blocks.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="青魚木塊拼圖" preserveAspectRatio="xMidYMid slice"><rect width="200" height="100" fill="#cfdede"/><rect x="20" y="20" width="14" height="14" rx="3" fill="#2a86b5"/><rect x="34" y="20" width="14" height="14" rx="3" fill="#2a86b5"/><rect x="48" y="20" width="14" height="14" rx="3" fill="#2a86b5"/><rect x="20" y="34" width="14" height="14" rx="3" fill="#2a86b5"/><rect x="20" y="48" width="14" height="14" rx="3" fill="#2a86b5"/><rect x="90" y="40" width="14" height="14" rx="3" fill="#e9c36a"/><rect x="104" y="40" width="14" height="14" rx="3" fill="#e9c36a"/><rect x="90" y="54" width="14" height="14" rx="3" fill="#e9c36a"/><rect x="104" y="54" width="14" height="14" rx="3" fill="#e9c36a"/><rect x="140" y="20" width="14" height="14" rx="3" fill="#d9534f"/><rect x="140" y="34" width="14" height="14" rx="3" fill="#d9534f"/><rect x="140" y="48" width="14" height="14" rx="3" fill="#d9534f"/><rect x="140" y="62" width="14" height="14" rx="3" fill="#d9534f"/><rect x="154" y="62" width="14" height="14" rx="3" fill="#d9534f"/><rect x="30" y="72" width="14" height="14" rx="3" fill="#2e9e6b"/><rect x="44" y="72" width="14" height="14" rx="3" fill="#2e9e6b"/><rect x="58" y="72" width="14" height="14" rx="3" fill="#2e9e6b"/><rect x="72" y="72" width="14" height="14" rx="3" fill="#2e9e6b"/></svg>
+<div><h2>青魚木塊拼圖</h2><p class="sub">拖放方塊・消除整列整行</p></div>
+<div class="go"><span>開始玩</span><small id="n_blocks">自動存檔</small></div>
+</a>
+<a class="g" id="g_flappy" href="flappy.html">
+<svg class="art" viewBox="0 0 200 100" role="img" aria-label="青魚 FLAPPY JUMP" preserveAspectRatio="xMidYMid slice"><rect width="200" height="100" fill="#8fd3ee"/><rect y="86" width="200" height="14" fill="#d9b878"/><rect y="86" width="200" height="4" fill="#5ec28f"/><rect x="120" y="0" width="22" height="32" fill="#3cb88a"/><rect x="116" y="28" width="30" height="8" fill="#2e9e6b"/><rect x="120" y="64" width="22" height="22" fill="#3cb88a"/><rect x="116" y="60" width="30" height="8" fill="#2e9e6b"/><rect x="36" y="0" width="22" height="18" fill="#3cb88a"/><rect x="32" y="14" width="30" height="8" fill="#2e9e6b"/><rect x="36" y="52" width="22" height="34" fill="#3cb88a"/><rect x="32" y="48" width="30" height="8" fill="#2e9e6b"/><g transform="translate(88 40) rotate(-12)"><path d="M-8 0L-18 -8L-18 8Z" fill="#e9c36a"/><ellipse rx="14" ry="10" fill="#1f6f8b"/><circle cx="6" cy="-3" r="3.5" fill="#fff"/><circle cx="7" cy="-3" r="1.6" fill="#12303a"/></g></svg>
+<div><h2>青魚 FLAPPY JUMP</h2><p class="sub">點擊讓小魚跳過水管</p></div>
+<div class="go"><span>開始玩</span><small id="n_flappy">挑戰最高分</small></div>
+</a>
+</main>
+<div class="bar">
+<button id="bTheme" type="button">主題:跟隨系統</button>
+<button id="bInstall" type="button" hidden>📲 安裝到主畫面</button>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const LS=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const pad=n=>String(n).padStart(2,'0');
+const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const fmt=t=>pad(t/60|0)+':'+pad(t%60);
+
+/* 數獨狀態摘要(只讀取,不改動數獨的存檔) */
+(function(){
+ try{
+  const S=LS('qy.s')||{},g=LS('qy.g'),L=LS('qy.l')||{};
+  const names={easy:'簡單',mid:'中等',hard:'困難',exp:'專家'};
+  const live=g&&typeof g==='object'&&!g.done&&Array.isArray(g.s)&&g.s.length===81&&Number.isFinite(g.t);
+  const t=key(new Date()),y=new Date();y.setDate(y.getDate()-1);
+  const st=(S.lastDaily===t||S.lastDaily===key(y))&&S.streak>0?S.streak:0;
+  const doneToday=!!(S.days&&S.days[t]);
+  if(live){
+   $('#sudokuGo').textContent='繼續遊戲';
+   $('#sudokuNote').textContent=(g.ch?'挑戰第 '+g.ch+' 關':(g.daily?'每日 ':'')+(names[g.diff]||''))+' '+fmt(Math.floor(g.t));
+  }else{
+   $('#sudokuNote').textContent=doneToday?'✓ 今日每日挑戰已完成':'今日每日挑戰等你';
+  }
+  if(st)$('#sudokuSub').textContent='每日挑戰連續 '+st+' 天';
+  else if(L.st&&Object.keys(L.st).length)$('#sudokuSub').textContent='挑戰模式已通關 '+Object.keys(L.st).length+' / 100 關';
+ }catch(e){}
+})();
+
+
+/* 其他遊戲的最高紀錄摘要(只讀取) */
+(function(){
+ const set=(id,txt)=>{const e=document.getElementById('n_'+id);if(e&&txt)e.textContent=txt};
+ try{
+  const b=LS('qy.best.2048');if(b>0)set('g2048','最高 '+b+' 分');
+  const c=LS('qy.best.2248');if(c>0)set('g2248','最高 '+c+' 分');
+  const s=LS('qy.best.snake');if(s&&typeof s==='object'){const m=Math.max(0,...Object.values(s).map(Number).filter(Number.isFinite));if(m>0)set('snake','最高 '+m+' 分')}
+  const t=LS('qy.best.ms0');if(t>0)set('minesweeper','初級最佳 '+t+' 秒');
+  const l=LS('qy.best.slide4');if(l>0)set('slide','4×4 最少 '+l+' 步');
+  const k=LS('qy.best.blocks');if(k>0)set('blocks','最高 '+k+' 分');
+  const f=LS('qy.best.flappy');if(f>0)set('flappy','最高 '+f+' 分');
+ }catch(e){}
+})();
+
+/* 主題:與所有遊戲共用 qy-theme('' = 跟隨系統) */
+const TH=['','light','dark'],TN={'':'跟隨系統',light:'淺色',dark:'深色'};
+function curTheme(){try{const v=localStorage.getItem('qy-theme');return TH.includes(v)?v:''}catch{return ''}}
+function applyTheme(v){
+ if(v)document.documentElement.dataset.theme=v;else delete document.documentElement.dataset.theme;
+ $('#bTheme').textContent='主題:'+TN[v];
+ const dk=v==='dark'||(!v&&matchMedia('(prefers-color-scheme:dark)').matches);
+ $('meta[name=theme-color]').content=dk?'#0e1d24':'#e6eeee';
+}
+$('#bTheme').onclick=()=>{
+ const n=TH[(TH.indexOf(curTheme())+1)%3];
+ try{localStorage.setItem('qy-theme',n)}catch{}
+ applyTheme(n);
+};
+applyTheme(curTheme());
+try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>applyTheme(curTheme()))}catch{}
+/* 從別的頁面按「上一頁」回來時,頁面可能來自快取,重新整理一次摘要 */
+addEventListener('pageshow',e=>{if(e.persisted)location.reload()});
+
+/* 安裝 */
+let ip=null;
+const standalone=()=>matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;if(!standalone())$('#bInstall').hidden=false});
+addEventListener('appinstalled',()=>{ip=null;$('#bInstall').hidden=true});
+$('#bInstall').onclick=()=>{if(!ip)return;const p=ip;ip=null;$('#bInstall').hidden=true;try{p.prompt()}catch{}};
+
+if('serviceWorker'in navigator&&/^https?:$/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>

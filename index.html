@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>青魚電腦 Qene Fish PC</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#021419">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚電腦">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/os.css">
+<link rel="stylesheet" href="css/apps.css">
+</head>
+<body>
+<noscript><p style="padding:24px;font:16px sans-serif">青魚電腦需要啟用 JavaScript 才能執行。</p></noscript>
+<div id="os">
+ <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="fish" viewBox="0 0 32 32"><path d="M2.5 16C7.5 7 18 6 24 12l6-5v18l-6-5C18 26 7.5 25 2.5 16z" fill="currentColor"/><circle cx="9.5" cy="14" r="1.6" fill="#06242b"/></symbol></svg>
+
+ <div id="desktop">
+  <div id="wall"><svg class="wfish" aria-hidden="true"><use href="#fish"/></svg></div>
+  <div id="icons" role="list" aria-label="桌面"></div>
+ </div>
+ <div id="wins"></div>
+ <div id="snap"></div>
+
+ <div id="tv" class="tv" role="dialog" aria-label="工作檢視"></div>
+ <div id="start" class="start" role="dialog" aria-label="開始">
+  <div class="stsrch"><svg class="ui" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="stq" type="text" placeholder="搜尋應用程式、設定與檔案" autocomplete="off" spellcheck="false" aria-label="搜尋"></div>
+  <div class="stmain"><div id="stHome"></div><div id="stAllV"></div><div id="stRes"></div></div>
+  <div class="stfoot"><button type="button" id="stUser" class="stuser"></button><button type="button" id="stPower" class="stpw" aria-label="電源" title="電源"><svg class="ui" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v9M6.5 6.5a8 8 0 1 0 11 0"/></svg></button></div>
+ </div>
+ <div id="flyout" class="flyout" role="dialog"></div>
+ <div id="toasts" aria-live="polite"></div>
+
+ <div id="taskbar" role="toolbar" aria-label="工作列">
+  <div id="tbc" class="tbc">
+   <button type="button" id="tbStart" class="tbb tbs" title="開始" aria-label="開始"></button>
+   <button type="button" id="tbSearch" class="tbsrch" title="搜尋" aria-label="搜尋"></button>
+   <button type="button" id="tbTV" class="tbb" title="工作檢視" aria-label="工作檢視"></button>
+   <div id="tbApps" class="tbapps"></div>
+  </div>
+  <div class="tray">
+   <button type="button" id="tbCam" class="trb" style="display:none"></button>
+   <button type="button" id="tbQS" class="trb qsb" aria-label="快速設定"><span id="tIcNet"></span><span id="tIcVol"></span><span id="tIcBat"></span></button>
+   <button type="button" id="tbClock" class="trb clk" aria-label="日期與時間"></button>
+   <button type="button" id="tbDesk" class="tbdesk" aria-label="顯示桌面"></button>
+  </div>
+ </div>
+
+ <div id="welcome" class="scr"><div id="wlAv"></div><h2 id="wlName"></h2><div class="spin"></div></div>
+ <div id="lockscr" class="scr" tabindex="-1">
+  <div class="scr-bg"></div><div class="scr-shade"></div>
+  <div class="lkc"><div id="lkTime">--:--</div><div id="lkDate"></div></div>
+  <div id="lkNotes"></div>
+  <div class="lkhint">點擊畫面或按任意鍵繼續</div>
+  <div class="scrcorner"><button type="button" class="scrbtn scrpw" aria-label="電源" title="電源"><svg class="ui" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v9M6.5 6.5a8 8 0 1 0 11 0"/></svg></button></div>
+ </div>
+ <div id="login" class="scr">
+  <div class="scr-bg blur"></div><div class="scr-shade"></div>
+  <button type="button" id="lgBack" class="scrbtn lgback" aria-label="返回">‹</button>
+  <form id="lgForm" autocomplete="off">
+   <div id="lgAv"></div><h2 id="lgName"></h2>
+   <div class="lgrow"><input id="lgPass" type="password" placeholder="密碼" aria-label="密碼" autocomplete="off"><button type="submit" aria-label="登入">→</button></div>
+   <div id="lgMsg" role="alert"></div><div id="lgHint"></div>
+   <button type="button" id="lgReset" class="lglink" style="display:none">我忘記密碼了</button>
+  </form>
+  <div class="scrcorner"><button type="button" class="scrbtn scrpw" aria-label="電源" title="電源"><svg class="ui" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v9M6.5 6.5a8 8 0 1 0 11 0"/></svg></button></div>
+ </div>
+ <div id="sleep" class="scr" tabindex="-1"></div>
+ <div id="boot" class="scr show"><svg class="blogo"><use href="#fish"/></svg><div class="bname">青魚電腦</div><div id="bootbar"></div><div id="bootmsg"></div></div>
+ <div id="off" class="scr" tabindex="-1"><button type="button" id="offbtn" aria-label="開機"><svg class="ui" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 3v9M6.5 6.5a8 8 0 1 0 11 0"/></svg></button><p>電腦已關機　點一下電源鈕，或按 Enter 開機</p></div>
+ <div id="night"></div>
+ <div id="dim"></div>
+</div>
+<script src="js/util.js"></script>
+<script src="js/state.js"></script>
+<script src="js/fs.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/wm.js"></script>
+<script src="js/desktop.js"></script>
+<script src="js/taskbar.js"></script>
+<script src="js/mouse.js"></script>
+<script src="js/install.js"></script>
+<script src="js/power.js"></script>
+<script src="js/apps/common.js"></script>
+<script src="js/apps/explorer.js"></script>
+<script src="js/apps/notepad.js"></script>
+<script src="js/apps/settings.js"></script>
+<script src="js/apps/calc.js"></script>
+<script src="js/apps/calendar.js"></script>
+<script src="js/apps/paint.js"></script>
+<script src="js/apps/terminal.js"></script>
+<script src="js/apps/taskmgr.js"></script>
+<script src="js/apps/photos.js"></script>
+<script src="js/apps/media.js"></script>
+<script src="js/apps/camera.js"></script>
+<script src="js/apps/browser.js"></script>
+<script src="js/apps/games.js"></script>
+<script src="js/apps/store.js"></script>
+<script src="js/apps/extras.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

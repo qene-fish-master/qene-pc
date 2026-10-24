@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e6eeee">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚 2048">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>青魚 2048</title>
+<link rel="stylesheet" href="qy.css">
+<style>
+.bw{width:max(240px,min(92vw,440px,calc(100dvh - 250px)));aspect-ratio:1;border-radius:12px;background:var(--line);touch-action:none;container-type:size;overflow:hidden}
+.bg{position:absolute;width:21.875%;height:21.875%;border-radius:8%;background:var(--cell)}
+.t{position:absolute;width:21.875%;height:21.875%;border-radius:8%;display:flex;align-items:center;justify-content:center;font-weight:800;transition:left .11s ease-out,top .11s ease-out;z-index:3;font-size:clamp(16px,9vw,42px);font-size:9cqw;background:#222;color:#fff;font-variant-numeric:tabular-nums}
+.t.dead{z-index:2}
+.t.big,.t.v1024,.t.v2048{font-size:clamp(13px,7vw,32px);font-size:7cqw}
+.t.v128,.t.v256,.t.v512{font-size:clamp(14px,8vw,36px);font-size:8cqw}
+.t.v2{background:#eef4f2;color:#12303a}.t.v4{background:#d6e8e2;color:#12303a}.t.v8{background:#8fd0bf}.t.v16{background:#5fbfcf}
+.t.v32{background:#3fa6c8}.t.v64{background:#2a86b5}.t.v128{background:#e9c36a;color:#3a2a08}.t.v256{background:#e8b24a;color:#3a2a08}
+.t.v512{background:#e39a3b}.t.v1024{background:#dc7f35}.t.v2048{background:#d9534f;box-shadow:0 0 18px #d9534f99}
+.t.new{animation:nw .16s ease-out .08s backwards}.t.pop{animation:pp .16s ease-out}
+@keyframes nw{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes pp{50%{transform:scale(1.18)}}
+</style>
+</head>
+<body>
+<header class="top"><a class="back" href="index.html">🐟 大廳</a><h1>2048</h1><button class="ib" id="bTheme" type="button">🌓</button></header>
+<div class="stats"><div class="stat"><small>分數</small><b id="sc">0</b></div><div class="stat"><small>最高分</small><b id="bs">0</b></div></div>
+<div class="bw" id="bw"><div id="board"></div>
+<div class="ov" id="ov"><h2 id="ovT"></h2><p id="ovP"></p><div class="bar" style="margin:0"><button class="btn p" id="ovA" type="button"></button><button class="btn" id="ovB" type="button">新遊戲</button></div></div></div>
+<div class="bar"><button class="btn p" id="bNew" type="button">新遊戲</button><button class="btn" id="bUndo" type="button">↩ 復原</button></div>
+<p class="tip">滑動或按方向鍵 / WASD 移動方塊,相同數字會合併</p>
+<script src="qy.js"></script>
+<script>
+const {$,LS}=QY,N=4,KEY='qy.2048',BK='qy.best.2048';
+let tiles=[],score=0,best=+LS.get(BK,0)||0,nid=1,won=false,keep=false,over=false,hist=[];
+const board=$('#board'),els=new Map();
+for(let i=0;i<16;i++){const d=document.createElement('div');d.className='bg';d.style.left=(2.5+(i%4)*24.375)+'%';d.style.top=(2.5+(i/4|0)*24.375)+'%';board.appendChild(d)}
+const live=()=>tiles.filter(t=>!t.dead);
+const at=(r,c)=>live().find(t=>t.r===r&&t.c===c);
+function sync(){
+ const ids=new Set();
+ for(const t of tiles){
+  ids.add(t.id);
+  let el=els.get(t.id);
+  const base='t v'+(t.v>2048?'big':t.v)+(t.dead?' dead':'');
+  if(!el){el=document.createElement('div');els.set(t.id,el);board.appendChild(el);el.className=base+(t.isNew?' new':'');el.textContent=t.v}
+  else{
+   el.textContent=t.v;el.className=base;
+   if(t.pop){void el.offsetWidth;el.className=base+' pop'}
+  }
+  el.style.left=(2.5+t.c*24.375)+'%';el.style.top=(2.5+t.r*24.375)+'%';
+ }
+ for(const [id,el] of els)if(!ids.has(id)){el.remove();els.delete(id)}
+ $('#sc').textContent=score;$('#bs').textContent=best;$('#bUndo').disabled=!hist.length||over;
+}
+function cleanup(){tiles=tiles.filter(t=>!t.dead);sync()}
+function save(){LS.set(KEY,{tiles:live().map(t=>({id:t.id,v:t.v,r:t.r,c:t.c})),score,won,keep,over,nid})}
+function spawn(){
+ const used=new Set(live().map(t=>t.r*N+t.c)),free=[];
+ for(let i=0;i<16;i++)if(!used.has(i))free.push(i);
+ if(!free.length)return;
+ const p=free[Math.random()*free.length|0];
+ tiles.push({id:nid++,v:Math.random()<.9?2:4,r:p/N|0,c:p%N,isNew:true});
+}
+function canMove(){
+ const L=live();if(L.length<16)return true;
+ for(const t of L)for(const [a,b] of [[0,1],[1,0]]){const o=at(t.r+a,t.c+b);if(o&&o.v===t.v)return true}
+ return false;
+}
+function showOv(t,p,a,fn){$('#ovT').textContent=t;$('#ovP').textContent=p;const A=$('#ovA');A.textContent=a;A.onclick=fn;$('#ov').classList.add('show')}
+function hideOv(){$('#ov').classList.remove('show')}
+function move(d){
+ if(over)return;
+ cleanup();
+ const snap={tiles:live().map(t=>({id:t.id,v:t.v,r:t.r,c:t.c})),score,won,keep,nid};
+ tiles.forEach(t=>{t.isNew=false;t.pop=false;t.merged=false});
+ let moved=false,gain=0;
+ for(let i=0;i<N;i++){
+  const line=[];
+  for(let j=0;j<N;j++){
+   const r=d===0?j:d===2?N-1-j:i,c=d===3?j:d===1?N-1-j:i;
+   const t=at(r,c);if(t)line.push(t);
+  }
+  let slot=0,last=null;
+  for(const t of line){
+   if(last&&last.v===t.v&&!last.merged){
+    t.r=last.r;t.c=last.c;t.dead=true;last.v*=2;last.merged=true;last.pop=true;gain+=last.v;moved=true;
+   }else{
+    const nr=d===0?slot:d===2?N-1-slot:i,nc=d===3?slot:d===1?N-1-slot:i;
+    if(t.r!==nr||t.c!==nc){moved=true;t.r=nr;t.c=nc}
+    slot++;last=t;
+   }
+  }
+ }
+ if(!moved){sync();return}
+ hist.push(snap);if(hist.length>30)hist.shift();
+ score+=gain;if(score>best){best=score;LS.set(BK,best)}
+ spawn();sync();
+ setTimeout(cleanup,140);
+ if(!won&&live().some(t=>t.v>=2048)){won=true;save();showOv('🎉 達成 2048!','你可以繼續挑戰更高的數字','繼續遊戲',()=>{keep=true;hideOv();if(!canMove()){over=true;sync();showOv('遊戲結束','最終分數 '+score,'再來一局',newGame)}save()});return}
+ if(!canMove()){over=true;sync();showOv('遊戲結束','最終分數 '+score,'再來一局',newGame)}
+ save();
+}
+function newGame(){
+ tiles=[];score=0;won=false;keep=false;over=false;hist=[];nid=1;
+ for(const [,el] of els)el.remove();els.clear();
+ hideOv();spawn();spawn();sync();save();
+}
+function undo(){
+ if(!hist.length)return;
+ const s=hist.pop();
+ tiles=s.tiles.map(t=>({...t}));score=s.score;won=s.won;keep=s.keep;nid=Math.max(nid,s.nid);over=false;
+ hideOv();sync();save();
+}
+function load(){
+ const s=LS.get(KEY,null);
+ try{
+  if(s&&Array.isArray(s.tiles)&&s.tiles.length&&s.tiles.every(t=>Number.isInteger(t.r)&&Number.isInteger(t.c)&&t.r>=0&&t.r<N&&t.c>=0&&t.c<N&&t.v>=2)){
+   tiles=s.tiles.map(t=>({id:t.id,v:t.v,r:t.r,c:t.c}));score=+s.score||0;won=!!s.won;keep=!!s.keep;over=!!s.over;nid=Math.max(+s.nid||1,...tiles.map(t=>t.id+1));
+   sync();
+   if(over)showOv('遊戲結束','最終分數 '+score,'再來一局',newGame);
+   return;
+  }
+ }catch(e){}
+ newGame();
+}
+addEventListener('keydown',e=>{
+ if(e.ctrlKey||e.metaKey||e.altKey)return;
+ const k={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3,w:0,d:1,s:2,a:3,W:0,D:1,S:2,A:3}[e.key];
+ if(k===undefined)return;e.preventDefault();
+ if($('#ov').classList.contains('show'))return;
+ move(k);
+});
+QY.swipe($('#bw'),d=>{if(!$('#ov').classList.contains('show'))move(d)});
+$('#bNew').onclick=newGame;$('#ovB').onclick=newGame;$('#bUndo').onclick=undo;
+load();
+</script>
+</body>
+</html>

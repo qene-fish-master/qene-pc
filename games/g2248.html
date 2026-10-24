@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e6eeee">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚 2248">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>青魚 2248 數字合併</title>
+<link rel="stylesheet" href="qy.css">
+<style>
+.bw{width:max(200px,min(92vw,380px,calc((100dvh - 250px) * 5 / 7)));aspect-ratio:5/7;border-radius:12px;background:var(--line);touch-action:none;container-type:size;overflow:hidden}
+.bg{position:absolute;width:20%;height:14.2857%;padding:1.2%}
+.bg::before{content:"";display:block;width:100%;height:100%;border-radius:12%;background:var(--cell)}
+.t{position:absolute;width:20%;height:14.2857%;padding:1.2%;z-index:3;transition:left .12s,top .22s cubic-bezier(.4,1.3,.6,1),opacity .15s,transform .15s}
+.t i{display:flex;width:100%;height:100%;align-items:center;justify-content:center;border-radius:12%;font-style:normal;font-weight:800;font-size:clamp(14px,6.5vw,28px);font-size:6.6cqw;background:#222;color:#fff;font-variant-numeric:tabular-nums}
+.t.sel i{outline:3px solid #fff;outline-offset:-3px;filter:brightness(1.12)}
+.t.gone{opacity:0;transform:scale(.4)}
+.t.big i{font-size:5cqw}
+.t.v2 i{background:#eef4f2;color:#12303a}.t.v4 i{background:#d6e8e2;color:#12303a}.t.v8 i{background:#8fd0bf}.t.v16 i{background:#5fbfcf}
+.t.v32 i{background:#3fa6c8}.t.v64 i{background:#2a86b5}.t.v128 i{background:#e9c36a;color:#3a2a08}.t.v256 i{background:#e8b24a;color:#3a2a08}
+.t.v512 i{background:#e39a3b}.t.v1024 i{background:#dc7f35}.t.v2048 i{background:#d9534f}.t.v4096 i{background:#9b59b6}.t.v8192 i{background:#2c3e50}
+#svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:10}
+#sum{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:11;background:var(--ac);color:#fff;border-radius:999px;padding:2px 14px;font-weight:800;font-size:16px;display:none;pointer-events:none}
+</style>
+</head>
+<body>
+<header class="top"><a class="back" href="index.html">🐟 大廳</a><h1>2248 數字合併</h1><button class="ib" id="bTheme" type="button">🌓</button></header>
+<div class="stats"><div class="stat"><small>分數</small><b id="sc">0</b></div><div class="stat"><small>最大方塊</small><b id="mx">2</b></div><div class="stat"><small>最高分</small><b id="bs">0</b></div></div>
+<div class="bw" id="bw"><div id="board"></div><svg id="svg" viewBox="0 0 500 700" preserveAspectRatio="none"><polyline id="pl" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg><div id="sum"></div>
+<div class="ov" id="ov"><h2>遊戲結束</h2><p id="ovP"></p><button class="btn p" id="ovA" type="button">再來一局</button></div></div>
+<div class="bar"><button class="btn p" id="bNew" type="button">新遊戲</button></div>
+<p class="tip">按住並拖過相鄰(含斜向)的相同數字,放開後合併。折返可取消上一格。</p>
+<script src="qy.js"></script>
+<script>
+const {$,LS}=QY,COLS=5,ROWS=7,KEY='qy.2248',BK='qy.best.2248';
+let tiles=[],score=0,best=+LS.get(BK,0)||0,nid=1,over=false,busy=false,chain=[],pid=null;
+const board=$('#board'),els=new Map(),bw=$('#bw');
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const d=document.createElement('div');d.className='bg';d.style.left=c*20+'%';d.style.top=r*100/ROWS+'%';board.appendChild(d)}
+const grid=()=>{const g=Array.from({length:ROWS},()=>Array(COLS).fill(null));tiles.forEach(t=>{g[t.r][t.c]=t});return g};
+function maxv(){return tiles.reduce((m,t)=>Math.max(m,t.v),2)}
+function rnd(){
+ const m=maxv(),pool=[2,4,8,16,32,64].filter(v=>v<=Math.max(8,m/4));
+ let tot=0;const w=pool.map((v,i)=>{const x=1/Math.pow(1.9,i);tot+=x;return x});
+ let x=Math.random()*tot;for(let i=0;i<pool.length;i++){x-=w[i];if(x<=0)return pool[i]}
+ return pool[0];
+}
+function place(el,r,c){el.style.left=c*20+'%';el.style.top=r*100/ROWS+'%'}
+function cls(t){return 't v'+(t.v>8192?'big':t.v)+(t.v>=1024?' big':'')+(t.sel?' sel':'')}
+function sync(){
+ const ids=new Set();
+ for(const t of tiles){
+  ids.add(t.id);
+  let el=els.get(t.id);
+  if(!el){
+   el=document.createElement('div');el.innerHTML='<i></i>';els.set(t.id,el);board.appendChild(el);
+   place(el,t.sr!==undefined?t.sr:t.r,t.c);
+   el.className=cls(t);el.firstChild.textContent=t.v;
+   void el.offsetWidth;
+  }
+  el.className=cls(t);el.firstChild.textContent=t.v;
+  place(el,t.r,t.c);
+  delete t.sr;
+ }
+ for(const [id,el] of els)if(!ids.has(id)){els.delete(id);el.classList.add('gone');setTimeout(()=>el.remove(),180)}
+ $('#sc').textContent=score;$('#bs').textContent=best;$('#mx').textContent=maxv();
+}
+function hasMove(){
+ const g=grid();
+ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+  const t=g[r][c];if(!t)continue;
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+   if(!dr&&!dc)continue;const o=g[r+dr]&&g[r+dr][c+dc];
+   if(o&&o.v===t.v)return true;
+  }
+ }
+ return false;
+}
+function fill(){
+ // 重力 + 補滿
+ for(let c=0;c<COLS;c++){
+  const col=tiles.filter(t=>t.c===c).sort((a,b)=>b.r-a.r);
+  let r=ROWS-1;
+  for(const t of col){t.r=r--}
+  const miss=r+1;
+  for(let k=0;k<miss;k++){tiles.push({id:nid++,v:rnd(),r:miss-1-k,c,sr:-1-k})}
+ }
+}
+function save(){LS.set(KEY,{tiles:tiles.map(t=>({id:t.id,v:t.v,r:t.r,c:t.c})),score,over,nid})}
+function setBest(){if(score>best){best=score;LS.set(BK,best)}}
+function initBoard(){
+ let tries=0;
+ do{
+  tiles=[];
+  for(let c=0;c<COLS;c++)for(let r=0;r<ROWS;r++)tiles.push({id:nid++,v:rnd(),r,c});
+  tries++;
+ }while(!hasMove()&&tries<50);
+}
+function newGame(){
+ for(const [,el] of els)el.remove();els.clear();
+ tiles=[];score=0;over=false;busy=false;clearChain();nid=1;
+ $('#ov').classList.remove('show');
+ initBoard();sync();save();
+}
+function pow2ge(n){let p=1;while(p<n)p*=2;return p}
+function clearChain(){
+ chain.forEach(t=>{t.sel=false});chain=[];
+ $('#pl').setAttribute('points','');$('#sum').style.display='none';
+ for(const t of tiles){const el=els.get(t.id);if(el)el.className=cls(t)}
+}
+function drawChain(){
+ for(const t of tiles){const el=els.get(t.id);if(el)el.className=cls(t)}
+ $('#pl').setAttribute('points',chain.map(t=>((t.c+.5)*100)+','+((t.r+.5)*100)).join(' '));
+ const s=$('#sum');
+ if(chain.length>=2){s.style.display='block';s.textContent=pow2ge(chain[0].v*chain.length)}else s.style.display='none';
+}
+function cellAt(e,strict){
+ const R=bw.getBoundingClientRect(),x=(e.clientX-R.left)/R.width*COLS,y=(e.clientY-R.top)/R.height*ROWS;
+ const c=Math.floor(x),r=Math.floor(y);
+ if(c<0||c>=COLS||r<0||r>=ROWS)return null;
+ if(strict&&Math.hypot(x-c-.5,y-r-.5)>.42)return null;
+ return tiles.find(t=>t.r===r&&t.c===c)||null;
+}
+bw.addEventListener('pointerdown',e=>{
+ if(busy||over||pid!==null)return;
+ if(e.pointerType==='mouse'&&e.button!==0)return;
+ const t=cellAt(e,false);if(!t)return;
+ pid=e.pointerId;try{bw.setPointerCapture(pid)}catch(x){}
+ chain=[t];t.sel=true;drawChain();
+});
+bw.addEventListener('pointermove',e=>{
+ if(e.pointerId!==pid||busy)return;
+ const t=cellAt(e,true);if(!t)return;
+ const last=chain[chain.length-1];if(t===last)return;
+ if(chain.length>=2&&t===chain[chain.length-2]){last.sel=false;chain.pop();drawChain();return}
+ if(chain.includes(t)||t.v!==last.v)return;
+ if(Math.max(Math.abs(t.r-last.r),Math.abs(t.c-last.c))!==1)return;
+ t.sel=true;chain.push(t);drawChain();
+});
+function endPtr(e,commit){
+ if(e.pointerId!==pid)return;
+ pid=null;try{bw.releasePointerCapture(e.pointerId)}catch(x){}
+ if(commit&&chain.length>=2)resolve();else clearChain();
+}
+bw.addEventListener('pointerup',e=>endPtr(e,true));
+bw.addEventListener('pointercancel',e=>endPtr(e,false));
+bw.addEventListener('lostpointercapture',e=>{if(e.pointerId===pid)endPtr(e,false)});
+function resolve(){
+ busy=true;
+ const ch=chain,last=ch[ch.length-1],val=pow2ge(ch[0].v*ch.length);
+ const rem=new Set(ch.slice(0,-1));
+ score+=val;setBest();
+ tiles=tiles.filter(t=>!rem.has(t));
+ last.v=val;
+ chain=[];ch.forEach(t=>{t.sel=false});
+ $('#pl').setAttribute('points','');$('#sum').style.display='none';
+ sync();
+ setTimeout(()=>{
+  fill();sync();
+  setTimeout(()=>{
+   busy=false;
+   if(!hasMove()){over=true;$('#ovP').textContent='最終分數 '+score;$('#ov').classList.add('show')}
+   save();
+  },260);
+ },160);
+}
+function load(){
+ const s=LS.get(KEY,null);
+ try{
+  if(s&&Array.isArray(s.tiles)&&s.tiles.length===ROWS*COLS&&s.tiles.every(t=>Number.isInteger(t.r)&&Number.isInteger(t.c)&&t.r>=0&&t.r<ROWS&&t.c>=0&&t.c<COLS&&t.v>=2)&&new Set(s.tiles.map(t=>t.r*COLS+t.c)).size===ROWS*COLS){
+   tiles=s.tiles.map(t=>({id:t.id,v:t.v,r:t.r,c:t.c}));score=+s.score||0;nid=Math.max(+s.nid||1,...tiles.map(t=>t.id+1));
+   over=!hasMove();sync();
+   if(over){$('#ovP').textContent='最終分數 '+score;$('#ov').classList.add('show')}
+   return;
+  }
+ }catch(e){}
+ newGame();
+}
+$('#bNew').onclick=newGame;$('#ovA').onclick=newGame;
+addEventListener('visibilitychange',()=>{if(document.hidden&&pid!==null){pid=null;clearChain()}});
+load();
+</script>
+</body>
+</html>

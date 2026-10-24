@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e6eeee">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚滑動拼圖">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>青魚滑動拼圖</title>
+<link rel="stylesheet" href="qy.css">
+<style>
+.bw{width:max(220px,min(92vw,440px,calc(100dvh - 300px)));aspect-ratio:1;border-radius:12px;background:var(--line);container-type:size;overflow:hidden}
+.pc{position:absolute;padding:0;transition:left .13s ease-out,top .13s ease-out;cursor:pointer}
+.pc i{display:flex;width:100%;height:100%;align-items:center;justify-content:center;border-radius:10%;font-style:normal;font-weight:800;color:#fff;background:#2a86b5;font-size:clamp(16px,calc(40cqw / var(--n)),56px);font-size:calc(40cqw / var(--n));font-variant-numeric:tabular-nums;box-shadow:inset 0 -3px 0 #0003}
+.pc.ok i{background:#2e9e6b}
+.pc.fish i{font-size:calc(34cqw / var(--n))}
+</style>
+</head>
+<body>
+<header class="top"><a class="back" href="index.html">🐟 大廳</a><h1>滑動拼圖</h1><button class="ib" id="bTheme" type="button">🌓</button></header>
+<div class="stats"><div class="stat"><small>步數</small><b id="mv">0</b></div><div class="stat"><small>時間</small><b id="tm">00:00</b></div><div class="stat"><small>最佳步數</small><b id="bs">--</b></div></div>
+<div class="bw" id="bw">
+<div class="ov" id="ov"><h2>🎉 完成!</h2><p id="ovP"></p><button class="btn p" id="ovA" type="button">再來一局</button></div></div>
+<div class="bar"><select id="sz" aria-label="大小"><option value="3">3×3</option><option value="4">4×4</option><option value="5">5×5</option></select><button class="btn p" id="bNew" type="button">打亂重來</button></div>
+<p class="tip">點擊與空格同列/同行的方塊即可滑動,也可用方向鍵。把數字依序排好,空格在右下角。</p>
+<script src="qy.js"></script>
+<script>
+const {$,LS}=QY;
+let n=+LS.get('qy.slide.n',4)||4;if(![3,4,5].includes(n))n=4;$('#sz').value=n;
+let a,moves=0,t0=0,timer=null,done=false,els=[];
+const bw=$('#bw');
+function ck(){return a.every((v,i)=>v===(i===n*n-1?0:i+1))}
+function pos(i){return [i%n,i/n|0]}
+function build(){
+ bw.querySelectorAll('.pc').forEach(e=>e.remove());els=[];
+ bw.style.setProperty('--n',n);
+ for(let v=1;v<n*n;v++){
+  const d=document.createElement('button');d.type='button';d.className='pc';d.dataset.v=v;d.innerHTML='<i>'+v+'</i>';
+  d.style.width=100/n+'%';d.style.height=100/n+'%';
+  d.style.padding=(n===3?1.6:n===4?1.3:1.1)+'%';
+  d.onclick=()=>tap(v);els[v]=d;bw.insertBefore(d,$('#ov'));
+ }
+}
+function render(){
+ for(let i=0;i<a.length;i++){
+  const v=a[i];if(!v)continue;
+  const [c,r]=pos(i),d=els[v];
+  d.style.left=c*100/n+'%';d.style.top=r*100/n+'%';
+  d.classList.toggle('ok',v===i+1);
+ }
+ $('#mv').textContent=moves;
+}
+function shuffle(){
+ a=[];for(let i=0;i<n*n-1;i++)a.push(i+1);a.push(0);
+ let e=n*n-1,prev=-1;
+ const steps=n*n*30;
+ for(let k=0;k<steps||ck();k++){
+  const [c,r]=pos(e),opt=[];
+  if(r>0)opt.push(e-n);if(r<n-1)opt.push(e+n);if(c>0)opt.push(e-1);if(c<n-1)opt.push(e+1);
+  const o=opt.filter(x=>x!==prev),m=o[Math.random()*o.length|0];
+  a[e]=a[m];a[m]=0;prev=e;e=m;
+ }
+}
+function newGame(){
+ clearInterval(timer);timer=null;moves=0;done=false;t0=0;
+ $('#ov').classList.remove('show');$('#tm').textContent='00:00';
+ const b=LS.get('qy.best.slide'+n,null);$('#bs').textContent=b?b:'--';
+ build();shuffle();render();
+}
+function tap(v){
+ if(done)return;
+ const i=a.indexOf(v),e=a.indexOf(0),[c,r]=pos(i),[ec,er]=pos(e);
+ if(c!==ec&&r!==er)return;
+ slide(i,e);
+}
+function slide(i,e){
+ const step=i%n===e%n?(i<e?-n:n):(i<e?-1:1);
+ // 從空格開始,依序把相鄰方塊移入,直到點到的位置
+ let k=e;
+ while(k!==i){const nx=k+step;a[k]=a[nx];k=nx}
+ a[i]=0;
+ moves++;
+ if(!timer){t0=Date.now();timer=setInterval(()=>{$('#tm').textContent=QY.fmt((Date.now()-t0)/1000)},500)}
+ render();
+ if(ck())win();
+}
+function key(d){
+ if(done)return;
+ const e=a.indexOf(0),[c,r]=pos(e);
+ // 方向 = 方塊移動方向:往上 → 空格下方的方塊上移
+ let i=-1;
+ if(d===0&&r<n-1)i=e+n;
+ if(d===2&&r>0)i=e-n;
+ if(d===1&&c>0)i=e-1;
+ if(d===3&&c<n-1)i=e+1;
+ if(i>=0)slide(i,e);
+}
+function win(){
+ done=true;clearInterval(timer);timer=null;
+ const t=Math.round((Date.now()-t0)/1000);
+ const k='qy.best.slide'+n,b=LS.get(k,null);let msg=moves+' 步・'+QY.fmt(t);
+ if(!b||moves<b){LS.set(k,moves);$('#bs').textContent=moves;msg+='・新紀錄!'}
+ $('#ovP').textContent=msg;
+ setTimeout(()=>$('#ov').classList.add('show'),250);
+}
+addEventListener('keydown',e=>{
+ if(e.ctrlKey||e.metaKey||e.altKey)return;
+ const d={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3,w:0,d:1,s:2,a:3,W:0,D:1,S:2,A:3}[e.key];
+ if(d===undefined)return;e.preventDefault();key(d);
+});
+$('#bNew').onclick=newGame;$('#ovA').onclick=newGame;
+$('#sz').onchange=()=>{n=+$('#sz').value;LS.set('qy.slide.n',n);newGame()};
+newGame();
+</script>
+</body>
+</html>

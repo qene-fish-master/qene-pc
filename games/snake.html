@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e6eeee">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚貪吃蛇">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>青魚貪吃蛇</title>
+<link rel="stylesheet" href="qy.css">
+<style>
+.bw{width:max(220px,min(92vw,440px,calc(100dvh - 330px)));aspect-ratio:1;border-radius:12px;overflow:hidden;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+.pad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,52px);gap:6px;margin-top:10px;justify-content:center}
+.pad button{font-size:22px;padding:0;border-radius:12px}
+.pad .u{grid-column:2;grid-row:1}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
+@media(min-width:760px) and (hover:hover){.pad{display:none}}
+</style>
+</head>
+<body>
+<header class="top"><a class="back" href="index.html">🐟 大廳</a><h1>貪吃蛇</h1><button class="ib" id="bTheme" type="button">🌓</button></header>
+<div class="stats"><div class="stat"><small>分數</small><b id="sc">0</b></div><div class="stat"><small>最高分</small><b id="bs">0</b></div><div class="stat"><small>長度</small><b id="ln">3</b></div></div>
+<div class="bw" id="bw"><canvas id="cv"></canvas>
+<div class="ov show" id="ov"><h2 id="ovT">貪吃蛇</h2><p id="ovP">按方向鍵、滑動或點擊開始</p><button class="btn p" id="ovA" type="button">開始</button></div></div>
+<div class="pad"><button class="btn u" data-d="0" type="button" aria-label="上">▲</button><button class="btn l" data-d="3" type="button" aria-label="左">◀</button><button class="btn d" data-d="2" type="button" aria-label="下">▼</button><button class="btn r" data-d="1" type="button" aria-label="右">▶</button></div>
+<div class="bar"><select id="spd" aria-label="速度"><option value="0">速度:慢</option><option value="1">速度:中</option><option value="2">速度:快</option></select><select id="wall" aria-label="牆壁"><option value="1">撞牆會死</option><option value="0">可穿牆</option></select><button class="btn" id="bPause" type="button">⏸ 暫停</button><button class="btn p" id="bNew" type="button">新遊戲</button></div>
+<p class="tip">方向鍵 / WASD 或滑動控制,空白鍵暫停</p>
+<script src="qy.js"></script>
+<script>
+const {$,LS,css}=QY,G=20,SP=[0.15,0.105,0.075],cv=$('#cv'),cx=cv.getContext('2d');
+let snake,dir,queue,food,score,state='ready',acc=0,last=0,raf=0,cell=20,size=400,best={};
+const DX=[0,1,0,-1],DY=[-1,0,1,0];
+const cfg=LS.get('qy.snake.cfg',{spd:1,wall:1});
+$('#spd').value=cfg.spd;$('#wall').value=cfg.wall;
+const bk=()=>'s'+$('#spd').value+'w'+$('#wall').value;
+function loadBest(){best=LS.get('qy.best.snake',{})||{};$('#bs').textContent=best[bk()]||0}
+function resize(){
+ const w=$('#bw').clientWidth,dpr=window.devicePixelRatio||1;
+ size=w;cell=w/G;cv.width=Math.round(w*dpr);cv.height=Math.round(w*dpr);cx.setTransform(cv.width/w,0,0,cv.height/w,0,0);draw();
+}
+function reset(){
+ snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];dir=1;queue=[];score=0;acc=0;
+ placeFood();upd();state='ready';draw();
+}
+function placeFood(){
+ const occ=new Set(snake.map(s=>s.x+s.y*G)),free=[];
+ for(let i=0;i<G*G;i++)if(!occ.has(i))free.push(i);
+ if(!free.length){food=null;return}
+ const p=free[Math.random()*free.length|0];food={x:p%G,y:p/G|0};
+}
+function upd(){$('#sc').textContent=score;$('#ln').textContent=snake.length}
+function showOv(t,p,a){$('#ovT').textContent=t;$('#ovP').textContent=p;$('#ovA').textContent=a;$('#ov').classList.add('show')}
+function start(){
+ if(state==='over'||state==='won')reset();
+ if(state==='ready'||state==='paused'){state='run';$('#ov').classList.remove('show');last=0;loop()}
+ $('#bPause').textContent='⏸ 暫停';
+}
+function pause(){
+ if(state==='run'){state='paused';cancelAnimationFrame(raf);showOv('已暫停','按空白鍵或點擊繼續','繼續');$('#bPause').textContent='▶ 繼續'}
+ else if(state==='paused')start();
+}
+function turn(d){
+ if(state==='over'||state==='won')return;
+ const ref=queue.length?queue[queue.length-1]:dir;
+ if(d!==ref&&(d+2)%4!==ref&&queue.length<2)queue.push(d);
+ if(state==='ready'||state==='paused')start();
+}
+function step(){
+ if(queue.length)dir=queue.shift();
+ const h=snake[0];let nx=h.x+DX[dir],ny=h.y+DY[dir];
+ if($('#wall').value==='1'){if(nx<0||ny<0||nx>=G||ny>=G)return die()}
+ else{nx=(nx+G)%G;ny=(ny+G)%G}
+ const eat=food&&nx===food.x&&ny===food.y;
+ const body=eat?snake:snake.slice(0,-1);
+ if(body.some(s=>s.x===nx&&s.y===ny))return die();
+ snake.unshift({x:nx,y:ny});
+ if(eat){
+  score+=10*(1+(+$('#spd').value));placeFood();
+  const k=bk();if(score>(best[k]||0)){best[k]=score;LS.set('qy.best.snake',best);$('#bs').textContent=score}
+  if(!food){upd();state='won';cancelAnimationFrame(raf);draw();showOv('🎉 滿版通關!','分數 '+score,'再玩一次');return}
+ }else snake.pop();
+ upd();
+}
+function die(){
+ state='over';cancelAnimationFrame(raf);draw();
+ showOv('遊戲結束','分數 '+score+'・長度 '+snake.length,'再玩一次');$('#bPause').textContent='⏸ 暫停';
+}
+function loop(t){
+ if(state!=='run')return;
+ raf=requestAnimationFrame(loop);
+ if(!t)return;
+ if(!last){last=t;return}
+ acc+=Math.min(0.1,(t-last)/1000);last=t;
+ const iv=SP[+$('#spd').value];
+ while(acc>=iv&&state==='run'){acc-=iv;step()}
+ draw();
+}
+function rr(x,y,w,h,r){cx.beginPath();cx.roundRect?cx.roundRect(x,y,w,h,r):cx.rect(x,y,w,h)}
+function draw(){
+ if(!snake)return;
+ const bg=css('--cell'),ln=css('--line');
+ cx.fillStyle=bg;cx.fillRect(0,0,size,size);
+ cx.fillStyle=ln;cx.globalAlpha=.55;
+ for(let y=0;y<G;y++)for(let x=0;x<G;x++)if((x+y)&1)cx.fillRect(x*cell,y*cell,cell,cell);
+ cx.globalAlpha=1;
+ if(food){
+  cx.fillStyle='#e9c36a';cx.beginPath();cx.arc((food.x+.5)*cell,(food.y+.5)*cell,cell*.36,0,7);cx.fill();
+  cx.fillStyle='#d9534f';cx.beginPath();cx.arc((food.x+.5)*cell,(food.y+.5)*cell,cell*.2,0,7);cx.fill();
+ }
+ const dead=state==='over';
+ for(let i=snake.length-1;i>=0;i--){
+  const s=snake[i],p=cell*.06;
+  cx.fillStyle=dead?'#b05a57':(i===0?'#1f6f8b':(i%2?'#3fa6c8':'#2f8fb8'));
+  rr(s.x*cell+p,s.y*cell+p,cell-2*p,cell-2*p,cell*.28);cx.fill();
+ }
+ const h=snake[0],ex=[[.3,.3,.7,.3],[.7,.3,.7,.7],[.3,.7,.7,.7],[.3,.3,.3,.7]][dir];
+ cx.fillStyle='#fff';
+ for(let k=0;k<2;k++){cx.beginPath();cx.arc((h.x+ex[k*2])*cell,(h.y+ex[k*2+1])*cell,cell*.11,0,7);cx.fill()}
+ cx.fillStyle='#12303a';
+ for(let k=0;k<2;k++){cx.beginPath();cx.arc((h.x+ex[k*2])*cell,(h.y+ex[k*2+1])*cell,cell*.05,0,7);cx.fill()}
+}
+addEventListener('keydown',e=>{
+ if(e.ctrlKey||e.metaKey||e.altKey)return;
+ if(e.key===' '){e.preventDefault();if(state==='run'||state==='paused')pause();else start();return}
+ const d={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3,w:0,d:1,s:2,a:3,W:0,D:1,S:2,A:3}[e.key];
+ if(d===undefined)return;e.preventDefault();turn(d);
+});
+QY.swipe($('#bw'),turn,18);
+document.querySelectorAll('.pad button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();turn(+b.dataset.d)}));
+$('#ovA').onclick=()=>{if(state==='paused')pause();else start()};
+$('#bPause').onclick=()=>{if(state==='run'||state==='paused')pause()};
+$('#bNew').onclick=()=>{cancelAnimationFrame(raf);reset();showOv('貪吃蛇','按方向鍵、滑動或點擊開始','開始');$('#bPause').textContent='⏸ 暫停'};
+function chg(){LS.set('qy.snake.cfg',{spd:+$('#spd').value,wall:+$('#wall').value});$('#bNew').onclick()}
+$('#spd').onchange=chg;$('#wall').onchange=chg;
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='run')pause()});
+addEventListener('blur',()=>{if(state==='run')pause()});
+addEventListener('resize',resize);
+window.addEventListener('qy-theme',draw);
+loadBest();reset();resize();
+$('#spd').addEventListener('change',loadBest);$('#wall').addEventListener('change',loadBest);
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>青魚五子棋</title>
+<meta name="theme-color" content="#f4f1ea">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="青魚五子棋">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="color-scheme" content="light dark">
+<style>
+:root{color-scheme:light dark;--bar:#1f6f8b;--bg:#f4f1ea;--fg:#2a2a2a;--card:#fff;--ac:#1f6f8b;--bd:#d8d2c4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bar:#17202a;--bg:#17202a;--fg:#e8e6e1;--card:#202c38;--ac:#5fb3d0;--bd:#33424f}}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark;--bar:#17202a;--bg:#17202a;--fg:#e8e6e1;--card:#202c38;--ac:#5fb3d0;--bd:#33424f}
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--bar);z-index:8;pointer-events:none}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;padding-right:12px}#ck{margin-top:12px;margin-left:auto;padding-left:12px;text-align:right;font-size:13px;line-height:1.5;font-variant-numeric:tabular-nums}#ck b{color:var(--ac)}#fish{cursor:pointer;user-select:none}
+h1{margin:10px 12px 0;font-size:24px;color:var(--ac)}h1 small{font-size:13px;color:var(--fg);opacity:.6;margin-left:8px}
+.wrap{display:flex;flex-wrap:wrap;gap:14px;padding:10px 12px;max-width:1400px;margin:auto;justify-content:center}
+canvas{border-radius:6px;box-shadow:0 2px 10px #0004;touch-action:manipulation;max-width:100%;height:auto;aspect-ratio:1;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.side{flex:1;min-width:280px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 12px}
+.card h3{margin:0 0 6px;font-size:14px;opacity:.75}
+button,select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--ac)}button.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.op button{padding:3px 8px;font-size:14px}
+#st{font-weight:600;font-size:16px}#pat{min-height:26px;color:var(--ac);font-weight:700}
+#log{font-size:13px;opacity:.8;max-height:90px;overflow:auto}
+#md{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:9;padding:12px}
+#md>div{background:var(--card);max-width:640px;max-height:88vh;overflow:auto;border-radius:12px;padding:16px 20px}
+#md h2{margin:0 0 6px;color:var(--ac)}#md h4{margin:12px 0 2px}#md p{margin:2px 0}
+a.btn{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:5px 10px;text-decoration:none;display:inline-block}a.btn:hover{border-color:var(--ac)}
+button:disabled{opacity:.45;cursor:not-allowed}
+#fsbar{display:none}body.fsb #fsbar{display:flex}
+body.fsb .hd,body.fsb .card.op,body.fsb #ctl,body.fsb #log,body.fsb #hint{display:none}
+body.fsb .wrap{max-width:none;padding:6px;gap:8px;justify-content:center;align-items:flex-start}
+body.fsb .side{flex:1 1 100%;min-width:0;gap:6px}
+body.fsb.ls .wrap{flex-wrap:nowrap}body.fsb.ls .side{flex:0 0 190px}
+#ski{font-size:13px;line-height:1.6}
+.t{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:14px}.t b{color:var(--ac);white-space:nowrap}
+</style></head><body>
+<div class="hd"><h1><span id="fish">🐟</span> 青魚五子棋<small>15×15・可選連珠禁手規則</small></h1><div id="ck"></div></div>
+<div class="wrap">
+<canvas id="cv"></canvas>
+<div class="side">
+<div class="card" id="stc"><div id="st"></div><div id="pat"></div><div class="row" id="fsbar"><button class="p" onclick="go()">▶ 開始</button><button onclick="nw()">新局</button><button onclick="undo()">悔棋</button><button onclick="tf()">✕ 退出全螢幕</button></div><div id="hint" style="font-size:14px;margin-top:4px"></div><div id="log"></div></div>
+<div class="card" id="skc" style="display:none"><h3>技能五子棋（無禁手規則，每項技能每人限用一次）</h3><div id="ski"></div><div class="row" id="skb" style="margin-top:6px"></div><div style="font-size:12px;opacity:.65;margin-top:6px">🎯 雙管齊下：這回合連下兩子　💨 飛沙走石：移除對手一子　🔒 封印：封鎖一個空點，對手下一回合不能下。技能模式不能悔棋。</div></div>
+<div class="card" id="ctl"><div class="row">
+<select id="mode"><option value="1">單人・我執黑</option><option value="2">單人・我執白</option><option value="0">雙人對弈</option><option value="3">巴巴博弈（電腦對電腦）</option><option value="4">技能五子棋（雙人）</option></select>
+<select id="lv"><option value="0">簡單</option><option value="1" selected>普通</option><option value="2">困難</option></select><select id="lv2" style="display:none" title="白棋電腦強度"><option value="0">白：簡單</option><option value="1">白：普通</option><option value="2" selected>白：困難</option></select><select id="ru"><option value="1">有禁手（連珠）</option><option value="0" selected>無禁手（自由）</option></select>
+<a class="btn" id="lobby" href="index.html">🐟 大廳</a><button class="p" onclick="go()">▶ 開始對局</button><button onclick="nw()">新局</button><select id="th" onchange="setTheme(this.value)" title="主題"><option value="">主題：跟隨系統</option><option value="light">白色</option><option value="dark">黑色</option></select><button onclick="undo()">悔棋</button><button id="ins" style="display:none" onclick="inst()">📲 安裝</button>
+<button onclick="$('#md').style.display='flex'">📖 教學</button><button onclick="tf()">⛶ 棋盤全螢幕</button><a class="btn" href="https://qene-fish-master.github.io/qene-fish-Gomoku-Classic/" target="_blank" rel="noopener">🕰 舊版</a>
+<label><input type="checkbox" id="fb" onchange="draw()"> 顯示禁手</label> <label><input type="checkbox" id="sg" onchange="showHint();draw()"> 顯示建議</label> <label><input type="checkbox" id="tk" onchange="if(!this.checked&&cvc){$('#hint').textContent='';hp=null;draw()}status()"> 電腦思考提示</label> <label><input type="checkbox" id="fs" onchange="if(this.checked&&cvc){$('#hint').textContent='';hp=null;draw()}status()"> ⚡ 極速（電腦0.1秒內）</label></div></div>
+<div class="card op"><h3>直止打法（白2在黑1正上方）</h3><div class="row" id="od"></div>
+<h3 style="margin-top:8px">斜止打法（白2在黑1右上斜角）</h3><div class="row" id="oi"></div>
+<div style="font-size:12px;opacity:.65;margin-top:6px">按下即擺出前三手（黑1·白2·黑3），輪到白棋下第4手。</div></div>
+</div></div>
+<div id="md" onclick="if(event.target==this)this.style.display='none'"><div>
+<h2>青魚五子棋 教學</h2>
+<h4>基本規則</h4><p>可在上方選擇電腦強度（簡單／普通／困難）與規則：「有禁手」為連珠規則，「無禁手」為自由規則（黑白皆五子以上即勝）。</p><p>黑先白後，輪流下在 15×15 交叉點。先在橫、直、斜連成「剛好五子」者勝。單人模式由電腦對弈；雙人模式可兩人輪流下。</p>
+<h4>黑棋禁手（白棋無限制）</h4>
+<div class="t"><b>三三禁手</b><span>一手同時形成兩個以上活三。</span><b>四四禁手</b><span>一手同時形成兩個以上的四。</span><b>長連禁手</b><span>連成六子以上。</span></div>
+<p>黑棋若同時成五，則成五優先、不算禁手。禁手點會以紅色 ✕ 標示，黑棋下在該處會被拒絕。</p>
+<h4>招式名稱</h4>
+<div class="t"><b>活二</b><span>兩子相連，兩端有空，有機會發展為活三。</span><b>眠三</b><span>三子，一端被堵，只能成沖四。</span>
+<b>活三</b><span>再下一手就成活四的三子，必須立即防守。</span><b>沖四</b><span>四子，只有一個點能成五，對手必須擋住。</span>
+<b>活四</b><span>兩端都能成五，對手無法同時防守，必勝。</span><b>連五</b><span>五子連線，獲勝。</span>
+<b>四三</b><span>同時有一個四和一個活三，威力強大的致勝招。</span><b>三三</b><span>同時兩個活三（黑棋禁手）。</span>
+<b>四四</b><span>同時兩個四（黑棋禁手）。</span><b>長連</b><span>六子以上（黑棋禁手）。</span></div>
+<h4>珠型（開局）</h4><p>連珠比賽前三手固定為「珠型」，共 26 種：白2在黑1正旁（直止）有 13 種，在斜角（斜止）有 13 種。右側按鈕可直接擺出開局來練習。</p>
+<h4>技能五子棋（雙人）</h4><p>在模式選單選「技能五子棋」。此模式固定使用無禁手規則（五子以上即勝），每人每項技能限用一次，用完會變灰色。</p>
+<div class="t"><b>🎯 雙管齊下</b><span>按下後這回合連續下兩子；若第一子就連成五子，立刻獲勝。</span><b>💨 飛沙走石</b><span>按下後點選一顆對手的棋子，將它移除，然後換對手。</span><b>🔒 封印</b><span>按下後點選一個空點，對手下一回合不能下在那裡（棋盤上以紅色「封」標示）。</span></div>
+<h4>全螢幕棋盤</h4><p>按「⛶ 棋盤全螢幕」會隱藏其他功能、放大棋盤，方便手機點擊；上方留有「開始／新局／悔棋／退出」按鈕。</p>
+<h4>小技巧</h4><p>① 先搶中央，向多個方向發展。② 看到對手活三立即擋。③ 自己用連續沖四逼對手，再創造四三。④ 執白時，可利用黑棋禁手點，逼黑棋無法落子。</p>
+<p style="text-align:right"><button class="p" onclick="$('#md').style.display='none'">開始遊玩</button></p>
+</div></div>
+<script>
+const $=s=>document.querySelector(s),N=15,B=1,W=2,D=[[1,0],[0,1],[1,1],[1,-1]];
+const DN='寒星 溪月 疏星 花月 殘月 雨月 金星 松月 丘月 新月 瑞星 山月 遊星'.split(' '),
+IN='長星 峽月 恆星 水月 流星 雲月 浦月 嵐月 銀月 明星 斜月 名月 彗星'.split(' ');
+const DP=[[0,2],[1,2],[2,2],[1,1],[2,1],[1,0],[2,0],[0,-1],[1,-1],[2,-1],[0,-2],[1,-2],[2,-2]],
+IP=[[2,2],[1,2],[0,2],[-1,2],[-2,2],[0,1],[-1,1],[-2,1],[-1,0],[-2,0],[-1,-1],[-2,-1],[-2,-2]];
+let bd,turn,hist,over,mode,me,S,C,fr=1,tm,cvc=0,t0=Date.now(),te=0,base=0,sk=0,pend=null,seal=null,nl=0,skl={},fsm=0;function sched(){tm=setTimeout(ai,$('#fs').checked?10:$('#tk').checked?(cvc?900:600):60)}
+let dp=0,st=0,started=0,hp=null;function explain(r,c,p,a,d){bd[r][c]=p;const x=an(r,c,p);bd[r][c]=0;return a>=1e6?'可以連成五子，直接獲勝！':d>=1e6?'對手下在這裡就會連五，必須擋住！':x.f&&x.t?'形成「四三」，威力強大':x.nm.length?'形成'+x.nm.join('・'):d>=500?'封堵對手的進攻點（對手下這裡會形成四或活三）':'擴展形勢、靠近中央'}
+function showHint(){hp=null;const h=$('#hint');if(!cvc||over)h.textContent='';if(sk||!started||over||cvc||!$('#sg').checked||(mode&&turn!=me))return;if(!hist.length){hp=[7,7];h.textContent='💡 建議：先下天元 H8，搶佔中央。';return}const p=turn,q=3-p;let b=null;for(const[r,c]of cand()){if(p==B&&foul(r,c))continue;const a=sc(r,c,p),d=(q==B&&foul(r,c))?0:sc(r,c,q),v=a+d*.95-Math.hypot(r-7,c-7);if(!b||v>b.v)b={v,r,c,a,d}}if(!b)return;const{r,c,a,d}=b;hp=[r,c];const why=explain(r,c,p,a,d);h.textContent='💡 建議：'+(p==B?'黑':'白')+'棋下 '+'ABCDEFGHIJKLMNO'[c]+(15-r)+'（'+why+'）'}function setTheme(v){try{localStorage.setItem('qy-theme',v||'')}catch(x){}if(v)document.documentElement.dataset.theme=v;else delete document.documentElement.dataset.theme;const d=v=='dark'||(!v&&matchMedia('(prefers-color-scheme:dark)').matches),m=document.querySelector('meta[name=theme-color]');if(m)m.content=d?'#17202a':'#f4f1ea'}function go(){if(started||over)return;started=1;t0=Date.now();status();draw();if(mode&&turn!=me)sched()}const cv=$('#cv'),cx=cv.getContext('2d');
+const g=(r,c)=>r<0||c<0||r>=N||c>=N?-1:bd[r][c];
+function run(r,c,dr,dc){const p=bd[r][c];let a=0,b=0;while(g(r-(a+1)*dr,c-(a+1)*dc)==p)a++;while(g(r+(b+1)*dr,c+(b+1)*dc)==p)b++;return[a+b+1,a,b]}
+function fl(r,c,p,dr,dc){const o=[];for(let k=-4;k<=4;k++){const x=r+k*dr,y=c+k*dc;if(g(x,y)!=0)continue;bd[x][y]=p;const[n,a,b]=run(x,y,dr,dc);bd[x][y]=0;if((p==W||!fr?n>=5:n==5)&&-k>=-a&&-k<=b)o.push([x,y])}return o}
+function o3(r,c,p,dr,dc){for(let k=-3;k<=3;k++){const x=r+k*dr,y=c+k*dc;if(g(x,y)!=0)continue;if(p==B&&fr&&st&&dp<2){dp++;const f=foul(x,y);dp--;if(f)continue}bd[x][y]=p;const l=fl(x,y,p,dr,dc).length;bd[x][y]=0;if(l>=2)return 1}return 0}
+function an(r,c,p){let five=0,over=0,f=0,t=0,nm=[];for(const[dr,dc]of D){const n=run(r,c,dr,dc)[0];if(n==5||((p==W||!fr)&&n>5)){five=1;continue}if(n>5){over=1;continue}
+const l=fl(r,c,p,dr,dc).length;if(l){const db=l>1&&n!=4;f+=db?2:1;nm.push(db?'四四':l>1?'活四':'沖四')}else if(o3(r,c,p,dr,dc)){t++;nm.push('活三')}}return{five,over,f,t,nm}}
+function foul(r,c){if(!fr||bd[r][c])return'';bd[r][c]=B;const o=st;st=0;let a=an(r,c,B);if(!a.five&&!a.over&&a.f<2&&a.t>=2){st=1;a=an(r,c,B)}st=o;bd[r][c]=0;if(a.five)return'';return a.over?'長連禁手':a.f>=2?'四四禁手':a.t>=2?'三三禁手':''}
+function cand(){const o=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(bd[r][c])continue;let ok=0;for(let i=-2;i<=2&&!ok;i++)for(let j=-2;j<=2;j++)if(g(r+i,c+j)>0){ok=1;break}if(ok)o.push([r,c])}return o}
+function say(t){$('#pat').textContent=t}
+function status(m){$('#st').textContent=(cvc?'【巴巴博弈】':sk?'【技能五子棋】':'')+(m||(over?'':(turn==B?'⚫ 黑棋':'⚪ 白棋')+'落子'+(mode&&turn!=me?($('#tk').checked&&!$('#fs').checked?'　🤔 電腦思考中…':''):'')));showHint();renderSkills();if(fsm)size()}
+function play(r,c){if(over||!started||bd[r][c])return;const p=turn;
+ if(sk&&seal&&seal.f==p&&seal.r==r&&seal.c==c){say('🔒 這個點被封印，這回合不能下！');return}
+ if(p==B&&fr){const f=foul(r,c);if(f){say('🚫 '+f+'！黑棋不能下這裡');return}}
+ bd[r][c]=p;hist.push([r,c,p]);nl=0;const a=an(r,c,p),who=p==B?'黑':'白';let nm=a.nm.slice();
+ if(a.f&&a.t)nm=['四三'];else if(a.f>=2)nm=['四四'];else if(a.t>=2)nm=['三三'];
+ if(a.five){over=1;nm=['連五']}
+ const t=nm.join('・');say(t?who+'棋：'+t:'');
+ if(t){const d=document.createElement('div');d.textContent=hist.length+'. '+who+' '+'ABCDEFGHIJKLMNO'[c]+(15-r)+' '+t;d.dataset.n=hist.length;$('#log').prepend(d)}
+ if(over)status((p==B?'⚫ 黑棋':'⚪ 白棋')+'獲勝！🎉');
+ else if(emp()==0){over=1;status('和棋')}
+ else if(sk&&pend&&pend.k=='d'&&pend.left==2){pend.left=1;skl[p].d--;say((t?who+'棋：'+t+'｜':'')+'🎯 請再下第二子');status()}
+ else{pend=null;if(seal&&seal.f==p)seal=null;turn=3-p;status();if(mode&&turn!=me)sched()}
+ draw()}
+const T=[0,[0,1,3],[0,5,30],[0,40,400],[0,600,6000]];
+function sc(r,c,p){bd[r][c]=p;let s=0,f=0,t=0;for(const[dr,dc]of D){const[n,a,b]=run(r,c,dr,dc);if(n>=5){s+=1e6;continue}
+const e=(g(r-(a+1)*dr,c-(a+1)*dc)==0)+(g(r+(b+1)*dr,c+(b+1)*dc)==0);s+=T[n][e];
+const l=fl(r,c,p,dr,dc).length;if(l){f++;s+=l>1?8000:500}else if(o3(r,c,p,dr,dc)){t++;s+=400}}
+if(f&&t)s+=3000;if(f>1)s+=5000;if(t>1)s+=2000;bd[r][c]=0;return s}
+function ai(){if(over||!started||!mode||turn==me)return;const ts=performance.now(),fm=$('#fs').checked,t1=ts+(fm?80:1e12),t2=ts+(fm?55:1e12),p=turn,q=3-p,lv=+$(cvc&&p==W?'#lv2':'#lv').value;if(!hist.length){play(7,7);return}
+const L=[];let cs=cand();if(fm){const l=hist[hist.length-1];cs.sort((x,y)=>Math.hypot(x[0]-l[0],x[1]-l[1])-Math.hypot(y[0]-l[0],y[1]-l[1]))}for(const[r,c]of cs){if(L.length&&performance.now()>t2)break;if(p==B&&foul(r,c))continue;const a=sc(r,c,p),d=(q==B&&foul(r,c))?0:sc(r,c,q);
+ L.push([lv==0?a+d*.5+Math.random()*700:a+d*.95-Math.hypot(r-7,c-7)+Math.random(),r,c,a,d])}
+if(!L.length){over=1;status(cvc?'無處可下，和棋':'電腦無處可下，你贏了！');return}
+L.sort((x,y)=>y[0]-x[0]);let b=L[0];
+if(lv==2&&b[3]<1e6&&b[4]<1e6){let bs=-1e9;for(const x of L.slice(0,8)){if(performance.now()>t1)break;bd[x[1]][x[2]]=p;let m=0,to=0;for(const[r,c]of cand()){if(performance.now()>t1){to=1;break}if(q==B&&foul(r,c))continue;m=Math.max(m,sc(r,c,q))}bd[x[1]][x[2]]=0;if(to)break;const v=x[0]-(m>=8000?.7*m:.15*m);if(v>bs){bs=v;b=x}}}
+else if(lv==0&&Math.random()<.2&&b[3]<1e6)b=L[Math.min(L.length-1,1+(Math.random()*4|0))];
+if(cvc&&$('#tk').checked&&!$('#fs').checked){hp=[b[1],b[2]];$('#hint').textContent='🤖 '+(p==B?'黑':'白')+'棋電腦打算下 '+'ABCDEFGHIJKLMNO'[b[2]]+(15-b[1])+'（'+explain(b[1],b[2],p,b[3],b[4])+'）';draw();tm=setTimeout(()=>{hp=null;play(b[1],b[2])},700);return}
+play(b[1],b[2])}
+function nw(op){clearTimeout(tm);const m=+$('#mode').value;sk=m==4;fr=sk?0:+$('#ru').value;$('#ru').disabled=sk;pend=null;seal=null;nl=0;skl={1:{d:1,r:1,s:1},2:{d:1,r:1,s:1}};bd=Array.from({length:N},()=>Array(N).fill(0));hist=[];over=0;turn=B;$('#log').innerHTML='';$('#hint').textContent='';say('');
+ mode=m>0&&m!=4;cvc=m==3;$('#lv2').style.display=cvc?'':'none';me=m==2?W:cvc?0:B;t0=Date.now();te=0;
+ if(op){const[x,y,w]=op;[[7,7,B],[6,w?8:7,W],[7-y,7+x,B]].forEach(([r,c,p])=>{bd[r][c]=p;hist.push([r,c,p])});turn=W}
+ base=hist.length;started=0;status('請按「▶ 開始對局」');draw()}
+function undo(){if(cvc||!started)return;if(sk){say('技能模式不能悔棋');return}if(hist.length<=base)return;if(mode&&!hist.slice(base).some(h=>h[2]==me))return;clearTimeout(tm);te=0;do{hist.pop()}while(mode&&hist.length>base&&hist[hist.length-1][2]==me);
+ bd=Array.from({length:N},()=>Array(N).fill(0));hist.forEach(([r,c,p])=>bd[r][c]=p);over=0;turn=hist.length?3-hist[hist.length-1][2]:B;say('');document.querySelectorAll('#log div').forEach(d=>{if(+d.dataset.n>hist.length)d.remove()});status();draw();if(mode&&!over&&turn!=me)sched()}
+function emp(){let n=0;for(const r of bd)for(const x of r)if(!x)n++;return n}
+function cn(p){let n=0;for(const r of bd)for(const x of r)if(x==p)n++;return n}
+function lg(p){return emp()-(seal&&seal.f==p&&!bd[seal.r][seal.c]?1:0)}
+function pos(r,c){return'ABCDEFGHIJKLMNO'[c]+(15-r)}
+function lgm(t){const d=document.createElement('div');d.textContent=t;d.dataset.n=hist.length;$('#log').prepend(d)}
+function renderSkills(){const c=$('#skc');c.style.display=sk?'':'none';if(!sk)return;
+ const nm={d:'🎯 雙管齊下',r:'💨 飛沙走石',s:'🔒 封印'},tp={d:'這回合連下兩子',r:'移除對手一顆棋子',s:'封鎖一個空點，對手下一回合不能下'},p=turn,b=$('#skb'),on=started&&!over,f=q=>'🎯'+skl[q].d+' 💨'+skl[q].r+' 🔒'+skl[q].s;
+ b.innerHTML='';
+ for(const k of['d','r','s']){const e=document.createElement('button');e.textContent=nm[k]+' ×'+skl[p][k];e.title=tp[k];
+  e.disabled=!on||!skl[p][k]||!!(pend&&pend.k=='d'&&pend.left<2);if(pend&&pend.k==k)e.className='p';e.onclick=()=>useSkill(k);b.append(e)}
+ $('#ski').innerHTML=(on?(p==B?'⚫ 黑棋':'⚪ 白棋')+'的回合・':'')+'剩餘技能　⚫ 黑 '+f(B)+'　⚪ 白 '+f(W)}
+function useSkill(k){if(!sk||!started||over)return;const p=turn;
+ if(pend){if(pend.k=='d'&&pend.left<2)return;const same=pend.k==k;pend=null;if(same){say('');status();draw();return}}
+ if(!skl[p][k])return;
+ if(k=='d'&&lg(p)<2){say('空位不足，無法使用雙管齊下');status();return}
+ if(k=='r'&&!cn(3-p)){say('對手場上沒有棋子可移除');status();return}
+ if(k=='s'&&emp()<2){say('空位不足，無法使用封印');status();return}
+ pend={k,left:2};say(k=='d'?'🎯 雙管齊下：請連續下兩子':k=='r'?'💨 飛沙走石：請點選一顆對手的棋子':'🔒 封印：請點選一個空點');status();draw()}
+function endTurn(p){pend=null;if(seal&&seal.f==p)seal=null;turn=3-p;status()}
+function act(r,c){if(sk&&pend&&!over){const p=turn;
+  if(pend.k=='r'){if(bd[r][c]!=3-p){say('請點選對手的棋子');return}bd[r][c]=0;hist=hist.filter(h=>!(h[0]==r&&h[1]==c));skl[p].r--;nl=1;lgm((p==B?'黑':'白')+' 💨 飛沙走石 移除 '+pos(r,c));say((p==B?'黑':'白')+'棋：💨 飛沙走石，移除了 '+pos(r,c));endTurn(p);draw();return}
+  if(pend.k=='s'){if(bd[r][c]){say('請點選空點');return}seal={r,c,f:3-p};skl[p].s--;lgm((p==B?'黑':'白')+' 🔒 封印 '+pos(r,c));say((p==B?'黑':'白')+'棋：🔒 封印了 '+pos(r,c));endTurn(p);draw();return}}
+ play(r,c)}
+let ip=null;
+$('#lobby').onclick=e=>{if(started&&!over&&hist.length>base&&!confirm('離開會放棄目前這一局,確定回大廳嗎?'))e.preventDefault()};
+function tf(){fsm=!fsm;document.body.classList.toggle('fsb',fsm);
+ try{if(fsm&&document.documentElement.requestFullscreen&&!document.fullscreenElement){const q=document.documentElement.requestFullscreen();if(q&&q.catch)q.catch(()=>{})}else if(!fsm&&document.fullscreenElement)document.exitFullscreen()}catch(x){}
+ size()}
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&fsm){fsm=0;document.body.classList.remove('fsb');size()}});
+function draw(){if(!bd)return;cx.fillStyle='#e0b25c';cx.fillRect(0,0,S,S);cx.strokeStyle='#5a3d12';cx.fillStyle='#5a3d12';cx.lineWidth=1;cx.font=C*.32+'px sans-serif';cx.textAlign='center';cx.textBaseline='middle';
+ for(let i=0;i<N;i++){const p=C*(i+1);cx.beginPath();cx.moveTo(C,p);cx.lineTo(C*15,p);cx.moveTo(p,C);cx.lineTo(p,C*15);cx.stroke();cx.fillText('ABCDEFGHIJKLMNO'[i],p,C*.4);cx.fillText(15-i,C*.4,p)}
+ [[3,3],[3,11],[7,7],[11,3],[11,11]].forEach(([r,c])=>{cx.beginPath();cx.arc(C*(c+1),C*(r+1),C*.09,0,7);cx.fill()});
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){const p=bd[r][c];if(!p)continue;const x=C*(c+1),y=C*(r+1),R=C*.44;
+  const gr=cx.createRadialGradient(x-R*.3,y-R*.3,R*.1,x,y,R);gr.addColorStop(0,p==B?'#666':'#fff');gr.addColorStop(1,p==B?'#000':'#cfcfcf');
+  cx.fillStyle=gr;cx.beginPath();cx.arc(x,y,R,0,7);cx.fill()}
+ if(seal){const x=C*(seal.c+1),y=C*(seal.r+1);cx.fillStyle='#c0392bdd';cx.beginPath();cx.arc(x,y,C*.34,0,7);cx.fill();cx.fillStyle='#fff';cx.font='bold '+C*.4+'px sans-serif';cx.fillText('封',x,y+1)}
+ if(sk&&pend&&pend.k=='r'&&!over){cx.strokeStyle='#d00';cx.lineWidth=2;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(bd[r][c]==3-turn){cx.beginPath();cx.arc(C*(c+1),C*(r+1),C*.5,0,7);cx.stroke()}}
+ const l=hist[hist.length-1];if(l&&!nl){cx.fillStyle='#e22';cx.beginPath();cx.arc(C*(l[1]+1),C*(l[0]+1),C*.1,0,7);cx.fill()}
+ if(hp){cx.strokeStyle='#1f6f8b';cx.lineWidth=3;cx.beginPath();cx.arc(C*(hp[1]+1),C*(hp[0]+1),C*.3,0,7);cx.stroke()}
+ if(fr&&!over&&turn==B&&$('#fb').checked&&(!mode||me==B)){cx.strokeStyle='#d00';cx.lineWidth=2;const k=C*.17;
+  for(const[r,c]of cand())if(foul(r,c)){const x=C*(c+1),y=C*(r+1);cx.beginPath();cx.moveTo(x-k,y-k);cx.lineTo(x+k,y+k);cx.moveTo(x+k,y-k);cx.lineTo(x-k,y+k);cx.stroke()}}}
+function size(){const w=$('.wrap'),ls=!!fsm&&innerWidth>innerHeight*1.2,rs=getComputedStyle(document.documentElement),ph=(parseFloat(rs.paddingTop)||0)+(parseFloat(rs.paddingBottom)||0);document.body.classList.toggle('ls',ls);let m;
+ if(fsm){const sd=$('.side');
+  m=ls?Math.min(innerHeight-ph-16,w.clientWidth-190-8-16):Math.min(w.clientWidth-16,innerHeight-ph-16-(sd.offsetHeight||0)-8-6);m=Math.min(m,1400)}
+ else{const av=w.clientWidth-24,hl=innerHeight-ph-($('.hd').offsetHeight||0)-24;
+  m=av>=840?Math.max(Math.min(av-14-290,hl,1000),360):Math.min(av,900,Math.max(hl,360))}
+ S=Math.max(200,Math.floor(m));C=S/16;const d=devicePixelRatio||1;cv.width=cv.height=S*d;cv.style.width=S+'px';cv.style.height='';cx.setTransform(d,0,0,d,0,0);draw()}
+cv.onclick=e=>{const b=cv.getBoundingClientRect(),c=Math.round((e.clientX-b.left)*(S/b.width)/C-1),r=Math.round((e.clientY-b.top)*(S/b.height)/C-1);
+ if(r<0||c<0||r>=N||c>=N||over||(mode&&turn!=me))return;if(!started){say('請先按「▶ 開始對局」');return}act(r,c)};
+[['od',DN,DP,0],['oi',IN,IP,1]].forEach(([id,ns,ps,w])=>ns.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>nw([...ps[i],w]);$('#'+id).append(b)}));
+$('#mode').onchange=$('#ru').onchange=()=>nw();addEventListener('resize',size);
+const fm=new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+function tick(){if(over&&!te)te=Date.now();const e=!started?0:Math.floor(((over&&te?te:Date.now())-t0)/1000),z=x=>String(x).padStart(2,'0');
+ let t='';try{t=fm.format(new Date())}catch(x){t=new Date().toLocaleString()}
+ $('#ck').innerHTML='台北標準時間 (UTC+8)<br><b>'+t+'</b><br>本局對局時間 <b>'+z(e/60|0)+':'+z(e%60)+'</b>'+(over?'（已結束）':'')}
+let eg=0,ec=0,et;$('#fish').onclick=()=>{ec++;clearTimeout(et);et=setTimeout(()=>ec=0,1500);
+ if(ec>=5&&!eg){eg=1;
+ say('🐟 巴巴博弈已在模式選單中：左邊選黑棋強度，右邊選白棋強度');}};
+setInterval(tick,250);tick();
+addEventListener('keydown',e=>{if(e.key!='Escape')return;const m=$('#md');if(m.style.display=='flex')m.style.display='none';else if(fsm)tf()});
+const sa=()=>matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;if(!sa())$('#ins').style.display=''});
+addEventListener('appinstalled',()=>{ip=null;$('#ins').style.display='none'});
+function inst(){if(!ip)return;const p=ip;ip=null;$('#ins').style.display='none';try{p.prompt()}catch(x){}}
+if('serviceWorker'in navigator&&/^https?:$/.test(location.protocol))addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+try{const v=localStorage.getItem('qy-theme');if(v){$('#th').value=v;setTheme(v)}else setTheme('')}catch(x){setTheme('')}
+try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>setTheme($('#th').value))}catch(x){}
+addEventListener('orientationchange',()=>setTimeout(size,250));
+size();nw();
+</script></body></html>
