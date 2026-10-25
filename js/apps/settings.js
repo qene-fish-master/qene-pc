@@ -48,7 +48,7 @@ const GROUPS=[
  ['帳戶與時間',[['accounts','你的資訊','user'],['time','日期與時間','clock'],['access','協助工具','star'],['privacy','隱私權與安全性','shield']]],
  ['',[['update','軟體更新','refresh2']]]
 ];
-const KW={display:'亮度 夜間光 深色 文字大小 縮放 全螢幕',sound:'音量 靜音 音效 喇叭',notif:'通知 橫幅 專注 勿擾',power:'睡眠 關機 重新啟動 鎖定 閒置 節電',storage:'儲存 磁碟 空間 資源回收筒',about:'恢復出廠設置 重設 重置 reset 關於 裝置 版本 規格 重設 電腦名稱 重新安裝',bluetooth:'藍牙 耳機',mouse:'滑鼠 指標 游標 軌跡 雙擊 波紋 cursor mouse pointer',network:'網路 wifi 無線 飛航',wallpaper:'背景 桌布 圖片',color:'色彩 主題 強調色 深色 淺色',taskbar:'工作列 對齊 搜尋',start:'開始 選單 釘選',deskicons:'桌面 圖示 排列',apps:'應用程式 解除安裝 程式',startup:'啟動 開機 自動',accounts:'帳戶 名稱 密碼 大頭貼 登入',time:'時間 日期 時區 24 小時',access:'協助 文字 對比 動畫',privacy:'隱私 相機 麥克風 紀錄',update:'更新 版本 下載 安裝 qeneos'};
+const KW={display:'亮度 夜間光 深色 文字大小 縮放 全螢幕',sound:'音量 靜音 音效 喇叭',notif:'通知 橫幅 專注 勿擾',power:'睡眠 關機 重新啟動 鎖定 閒置 節電 恢復出廠設置 重設 重置 reset 重新安裝',storage:'儲存 磁碟 空間 資源回收筒',about:'關於 裝置 版本 規格 電腦名稱',bluetooth:'藍牙 耳機',mouse:'滑鼠 指標 游標 軌跡 雙擊 波紋 cursor mouse pointer',network:'網路 wifi 無線 飛航',wallpaper:'背景 桌布 圖片',color:'色彩 主題 強調色 深色 淺色',taskbar:'工作列 對齊 搜尋',start:'開始 選單 釘選',deskicons:'桌面 圖示 排列',apps:'應用程式 解除安裝 程式',startup:'啟動 開機 自動',accounts:'帳戶 名稱 密碼 大頭貼 登入',time:'時間 日期 時區 24 小時',access:'協助 文字 對比 動畫',privacy:'隱私 相機 麥克風 紀錄',update:'更新 版本 下載 安裝 qeneos'};
 OS.settingsIndex=()=>{const o=[];GROUPS.forEach(([g,l])=>l.forEach(([id,n])=>o.push({id,name:n,kw:KW[id]||''})));return o};
 const ALIAS={personal:'wallpaper'};
 
@@ -91,7 +91,7 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
   P.sound=()=>grp(row('主音量','',rng('vol',0,100,1,'vol',S.muted?0:S.vol))+tg('muted','靜音','')+tg('sounds','系統音效','開機、通知與錯誤提示聲')+row('測試音效','',btn('beep','播放')));
   P.notif=()=>grp(tg('notif','通知','從應用程式與系統接收通知')+tg('banner','顯示通知橫幅','')+tg('nsound','通知音效','')+tg('focus','專注輔助（勿擾）','開啟時，通知只會進入通知中心'))+grp(row('通知中心',OS.R.notes.length+' 則通知',btn('clrn','全部清除',null,!OS.R.notes.length)));
   P.power=()=>{
-   return grp(row('閒置多久後自動鎖定','玩遊戲、瀏覽或播放媒體時不會鎖定',sel('idle',[[0,'永不'],[1,'1 分鐘'],[5,'5 分鐘'],[10,'10 分鐘'],[15,'15 分鐘'],[30,'30 分鐘']]))+tg('saver','節電模式','關閉動畫效果以節省電力'))+grp(row('鎖定','',btn('p-lock','鎖定'))+row('睡眠','',btn('p-sleep','睡眠'))+row('重新啟動','',btn('p-restart','重新啟動'))+row('關機','',btn('p-off','關機')));
+   return grp(row('閒置多久後自動鎖定','玩遊戲、瀏覽或播放媒體時不會鎖定',sel('idle',[[0,'永不'],[1,'1 分鐘'],[5,'5 分鐘'],[10,'10 分鐘'],[15,'15 分鐘'],[30,'30 分鐘']]))+tg('saver','節電模式','關閉動畫效果以節省電力'))+grp(row('鎖定','',btn('p-lock','鎖定'))+row('睡眠','',btn('p-sleep','睡眠'))+row('重新啟動','',btn('p-restart','重新啟動'))+row('關機','',btn('p-off','關機')))+grp(row('恢復出廠設置','刪除所有檔案、設定與已安裝的應用程式，讓電腦回到剛安裝完的狀態',btn('reset','恢復出廠設置','dng')));
   };
   P.storage=()=>{
    const st=FS.stats(),tot=Math.max(1,st.total);
@@ -102,7 +102,7 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
   P.about=()=>{
    const mem=navigator.deviceMemory?navigator.deviceMemory+' GB':'未知',cores=navigator.hardwareConcurrency||'?';
    return grp(row('裝置名稱',esc(S.pcName),btn('renpc','重新命名')))+grp(`<div class="sr1 col"><b>裝置規格</b><table class="ptab"><tr><th>處理器</th><td>${cores} 個邏輯核心</td></tr><tr><th>記憶體</th><td>${mem}（瀏覽器回報）</td></tr><tr><th>系統類型</th><td>QeneOS ${esc(S.ver)}（網頁模擬）</td></tr><tr><th>顯示器</th><td>${screen.width} × ${screen.height}</td></tr><tr><th>瀏覽器</th><td>${esc((navigator.userAgent.match(/(Chrome|Firefox|Safari|Edg)\/[\d.]+/)||['未知'])[0])}</td></tr><tr><th>安裝日期</th><td>${S.instDate?OS.fmtDateShort(new Date(S.instDate)):'—'}</td></tr></table></div>`)+
-   grp(row('恢復出廠設置','刪除所有檔案、設定與已安裝的應用程式，讓電腦回到剛安裝完的狀態',btn('reset','恢復出廠設置','dng')))+note('這是網頁模擬器，不是真正的作業系統，所有資料都只存在這個瀏覽器。');
+   note('這是網頁模擬器，不是真正的作業系統，所有資料都只存在這個瀏覽器。');
   };
   P.bluetooth=()=>grp(tg('bt','藍牙',OS.btOn()?'已開啟':'已關閉')+(OS.btOn()?row('青魚耳機 Pro',S.btDev?'已連線':'已配對',`<button type="button" class="tg${S.btDev?' on':''}" role="switch" aria-checked="${!!S.btDev}" aria-label="青魚耳機 Pro" data-tg="btDev"></button>`):''))+(S.airplane?note('飛航模式已開啟，藍牙無法使用。'):'');
   P.mouse=()=>{
