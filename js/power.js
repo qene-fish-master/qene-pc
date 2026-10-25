@@ -53,7 +53,7 @@ function toLogin(){
  $('#lgAv').innerHTML=OS.avatar(112);$('#lgName').textContent=S.name;
  $('#lgPass').value='';$('#lgMsg').textContent='';
  $('#lgHint').textContent=FLOW.fails>=2&&S.hint?'密碼提示：'+S.hint:'';
- $('#lgReset').style.display=FLOW.fails>=5?'':'none';
+ $('#lgReset').style.display='';
  showScr('login');
  setTimeout(()=>$('#lgPass').focus(),60);
 }
@@ -64,12 +64,17 @@ function loginTry(){
  const f=$('#lgForm');f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake');
  $('#lgMsg').textContent='密碼不正確，請再試一次。';
  $('#lgHint').textContent=FLOW.fails>=2&&S.hint?'密碼提示：'+S.hint:'';
- $('#lgReset').style.display=FLOW.fails>=5?'':'none';
+ $('#lgReset').style.display='';
  $('#lgPass').value='';$('#lgPass').focus();
 }
 async function resetPass(){
- const v=await OS.prompt({title:'重設密碼',msg:'這是模擬環境，沒有真正的帳戶可以驗證。請輸入重設碼 00000，就會移除登入密碼。',type:'text',placeholder:'重設碼',max:10});
- if(v==null)return;
+ let v;
+ for(;;){
+  v=await OS.prompt({title:'重設密碼',msg:'這是模擬環境，沒有真正的帳戶可以驗證。請輸入重設碼 00000，就會移除登入密碼。',type:'text',placeholder:'重設碼',max:10});
+  if(v!=null)break;
+  const r=await OS.dialog({title:'取消重設密碼',body:'<p class="dmsg">真的不要重設密碼了嗎？</p>',cancelId:'quit',buttons:[{id:'quit',label:'真的不要了'},{id:'back',label:'繼續重設',primary:true}]});
+  if(r!=='back')return;
+ }
  if(v.trim()==='00000'){S.passOn=false;S.pass='';S.hint='';OS.save();FLOW.fails=0;OS.toast('已移除登入密碼');signIn()}
  else{OS.sfx('error');OS.alert('重設碼不正確。',{kind:'err'})}
 }

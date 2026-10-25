@@ -21,7 +21,7 @@ const D={
  bm:[{t:'青魚說明',u:'qene:about'},{t:'維基百科',u:'https://zh.wikipedia.org'}],home:'qene:home',bmHome:true,bmBar:true,hist:[],
  msgs:{},calls:[],usage:{},fed:0,
  alarms:[],events:[],stickies:[],clocks:['Asia/Tokyo','Europe/London','America/New_York'],
- view:{},first:true,seeded:false,mig:null,legacy:false
+ view:{},phone:false,phoneInit:false,island:false,first:true,seeded:false,mig:null,legacy:false
 };
 OS.D=D;
 let S=JSON.parse(JSON.stringify(D));

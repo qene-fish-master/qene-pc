@@ -241,7 +241,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea{-webkit-
 .msep{height:1px;background:var(--line);margin:4px 6px}
 .mhdr{padding:5px 10px;font-size:11px;color:var(--mut)}
 .rad{width:6px;height:6px;border-radius:50%;background:currentColor;display:block}
-.dlgwrap{position:fixed;inset:0;z-index:4000;background:rgba(0,10,14,.34);display:grid;place-items:center;animation:fadeIn .12s}
+.dlgwrap{position:fixed;inset:0;z-index:5500;background:rgba(0,10,14,.34);display:grid;place-items:center;animation:fadeIn .12s}
 .dlgwrap.inwin{position:absolute;inset:36px 0 0 0;z-index:50}
 .dlg{min-width:300px;max-width:min(92vw,520px);background:var(--win);color:var(--fg);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;font-size:13.5px;animation:pop .15s}
 @keyframes pop{from{transform:scale(.95);opacity:0}}
@@ -375,3 +375,22 @@ input[type=range]{accent-color:var(--ac);cursor:var(--cur-hand,pointer)}
 
 #scur{position:fixed;left:0;top:0;z-index:99999;pointer-events:none;will-change:transform;filter:drop-shadow(0 1px 2px #0006)}#scur[hidden]{display:none}#scur svg{display:block}
 #os.softcur,#os.softcur *{cursor:none!important}
+
+/* 手機模式：由「設定 → 顯示 → 手機模式」控制 */
+.phone .tbc{left:4px;transform:none;max-width:calc(100% - 126px)}
+.phone #tIcBat small{display:none}
+.phone .tbsrch,.phone #tIcVol,.phone .tbdesk,.phone #tbTV{display:none}
+.phone .tbapps{flex:1 1 auto;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.phone .tbapps::-webkit-scrollbar{display:none}
+.phone .trb{padding:0 4px;gap:4px}
+.phone .clk{padding:0 6px}
+.phone .start{left:8px;margin-left:0;width:calc(100vw - 16px)}
+.phone .flyout{right:8px;width:calc(100vw - 16px)}
+.phone .win{border-radius:0}
+.phone .dic{min-height:64px}
+
+/* 避開動態島／瀏海：由「設定 → 顯示 → 避開動態島／瀏海」控制 */
+#os.island{top:max(env(safe-area-inset-top,0px),38px)}
+.lglink{padding:8px 14px;min-height:36px}
+.lgback{top:max(18px,calc(env(safe-area-inset-top,0px) + 8px))}
+#lgForm{gap:6px}

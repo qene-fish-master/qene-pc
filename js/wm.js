@@ -5,7 +5,7 @@ const OS=window.OS,{$,$$,esc,clamp}=OS.U;
 const WM=OS.WM={list:[],order:[],desks:[{}],desk:0,active:null,seq:0,Z0:100,sdList:null};
 const wins=()=>document.getElementById('wins');
 WM.area=()=>{const e=wins();return {w:e.clientWidth,h:e.clientHeight}};
-OS.compact=()=>innerWidth<720;
+OS.compact=()=>innerWidth<720||!!(OS.S&&OS.S.phone);
 const TBH=36;
 
 function geom(w){return {x:w.x,y:w.y,w:w.w,h:w.h}}

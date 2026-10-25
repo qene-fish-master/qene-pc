@@ -6,6 +6,8 @@ const OS=window.OS,{$,$$,esc,clamp}=OS.U,FS=OS.FS,S=OS.S;
 /* ---------- 外觀 ---------- */
 OS.applyAll=()=>{
  const os=$('#os');if(!os)return;
+ if(!S.phoneInit){S.phoneInit=true;S.phone=innerWidth<720;OS.save()}
+ os.classList.toggle('phone',!!S.phone);os.classList.toggle('island',!!S.island);
  os.classList.toggle('dark',!!S.dark);document.documentElement.classList.toggle('dark',!!S.dark);
  os.classList.toggle('acon',!!S.acon);os.classList.toggle('abold',!!S.abold);
  os.classList.toggle('anomo',!!(S.anomo||S.saver));

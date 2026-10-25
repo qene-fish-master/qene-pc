@@ -87,7 +87,7 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
    return `<div class="shero">${OS.avatar(64)}<div><b>${esc(S.name)}</b><small>${esc(S.pcName)} ・ QeneOS ${esc(S.ver)}</small></div></div>
    <div class="stiles"><button type="button" data-pg="network" class="stile">${OS.ico(OS.wifiOn()?'wifi':'wifioff',22)}<b>Wi-Fi</b><small>${OS.wifiOn()?esc(S.net):'關閉'}</small></button><button type="button" data-pg="wallpaper" class="stile">${OS.ico('image',22)}<b>個人化</b><small>背景、色彩</small></button><button type="button" data-pg="update" class="stile">${OS.ico('refresh2',22)}<b>軟體更新</b><small>${n?'有可用的更新':'已是最新'}</small></button><button type="button" data-pg="mouse" class="stile">${OS.ico('pin',22)}<b>滑鼠</b><small>指標與效果</small></button><button type="button" data-pg="storage" class="stile">${OS.ico('drive',22)}<b>儲存空間</b><small>${OS.U.fmtSize(FS.stats().total)}</small></button><button type="button" data-pg="accounts" class="stile">${OS.ico('user',22)}<b>帳戶</b><small>${S.passOn?'已設定密碼':'沒有密碼'}</small></button></div>`;
   };
-  P.display=()=>grp(row('亮度','調整螢幕亮度',rng('bright',30,100,1,'pct',Math.round(S.bright*100)))+tg('nightOn','夜間光','減少藍光，讓畫面偏暖色')+(S.nightOn?row('夜間光強度','',rng('night',10,100,1,'pct',Math.round(S.night*100))):'')+tg('dark','深色模式','')+row('文字大小','',seg('fs',[[14,'小'],[16,'中'],[18,'大'],[20,'特大']]))+row('全螢幕','',btn('full',OS.isFs()?'結束全螢幕':'進入全螢幕')))+grp(row('螢幕解析度',`${innerWidth} × ${innerHeight}（縮放比例 ${Math.round((devicePixelRatio||1)*100)}%）`,''));
+  P.display=()=>grp(row('亮度','調整螢幕亮度',rng('bright',30,100,1,'pct',Math.round(S.bright*100)))+tg('nightOn','夜間光','減少藍光，讓畫面偏暖色')+(S.nightOn?row('夜間光強度','',rng('night',10,100,1,'pct',Math.round(S.night*100))):'')+tg('dark','深色模式','')+tg('phone','手機模式','適合小螢幕：視窗自動全螢幕、工作列精簡、放大觸控目標')+tg('island','避開動態島／瀏海','把畫面往下移，避免被手機頂端的動態島或瀏海擋住')+row('文字大小','',seg('fs',[[14,'小'],[16,'中'],[18,'大'],[20,'特大']]))+row('全螢幕','',btn('full',OS.isFs()?'結束全螢幕':'進入全螢幕')))+grp(row('螢幕解析度',`${innerWidth} × ${innerHeight}（縮放比例 ${Math.round((devicePixelRatio||1)*100)}%）`,''));
   P.sound=()=>grp(row('主音量','',rng('vol',0,100,1,'vol',S.muted?0:S.vol))+tg('muted','靜音','')+tg('sounds','系統音效','開機、通知與錯誤提示聲')+row('測試音效','',btn('beep','播放')));
   P.notif=()=>grp(tg('notif','通知','從應用程式與系統接收通知')+tg('banner','顯示通知橫幅','')+tg('nsound','通知音效','')+tg('focus','專注輔助（勿擾）','開啟時，通知只會進入通知中心'))+grp(row('通知中心',OS.R.notes.length+' 則通知',btn('clrn','全部清除',null,!OS.R.notes.length)));
   P.power=()=>{
@@ -187,6 +187,7 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
    if(k==='tz'||k==='h24'||k==='showSec'||k==='weekStart'){OS.save();OS.clockRender();OS.lockClock();return}
    if(['tbAlign','tbSearch','tbTaskView'].includes(k)){OS.save();OS.applyAll();OS.tbRender();return}
    if(['showDeskIcons','iconSize','autoArrange','align','deskSys'].includes(k)){OS.save();OS.applyAll();OS.desk.render();return}
+   if(k==='phone'||k==='island'){OS.save();OS.applyAll();OS.tbRender();try{dispatchEvent(new Event('resize'))}catch(e){}return}
    if(k==='startRecent'){OS.save();return}
    if(k==='idle'){S.idle=+S.idle||0;OS.save();OS.idleBump();return}
    if(k==='fs'){S.fs=+S.fs;OS.save();OS.applyAll();return}
