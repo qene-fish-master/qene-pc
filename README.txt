@@ -7,3 +7,6 @@
 - 滑鼠：游標樣式/大小/顏色、軌跡、點擊波紋、Ctrl 定位、搖動放大、打字時隱藏、雙擊速度
 - 系統：開機/安裝畫面、首次設定（OOBE）、系統更新（可重新啟動安裝，重新開機後續跑）、重設此電腦
 - 資料存在瀏覽器（IndexedDB / localStorage），舊版「青魚手機」的設定與筆記會自動搬移。
+-
+網站：https://qene-fish-master.github.io/qene-pc/
+教學網站：https://qene-fish-master.github.io/qene-pc-help/
