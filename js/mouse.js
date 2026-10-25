@@ -3,13 +3,14 @@
 'use strict';
 const OS=window.OS,{$,clamp}=OS.U,S=OS.S;
 const M=OS.mouse={};
-M.defaults={cur:'default',size:1,color:'white',trail:false,trailLen:12,ripple:true,locate:true,hideTyping:false,shake:true,dbl:500};
+M.defaults={cur:'default',size:1,color:'white',trail:false,trailLen:12,ripple:true,locate:true,hideTyping:false,shake:true,dbl:500,soft:'auto'};
 M.normalize=()=>{
  const m=S.mouse=Object.assign({},M.defaults,S.mouse&&typeof S.mouse==='object'?S.mouse:{});
  if(!['default','fish','classic','dot'].includes(m.cur))m.cur='default';
  if(!['white','black','accent','yellow','red'].includes(m.color))m.color='white';
  m.size=[1,1.5,2,2.5,3].includes(+m.size)?+m.size:1;
  m.trailLen=clamp(Math.round(+m.trailLen||12),4,30);
+ if(!['auto','on','off'].includes(m.soft))m.soft='auto';
  m.dbl=clamp(Math.round(+m.dbl||500),200,900);
  ['trail','ripple','locate','hideTyping','shake'].forEach(k=>{m[k]=!!m[k]});
 };
@@ -60,8 +61,65 @@ M.apply=()=>{
  }
  if(!m.hideTyping)os.classList.remove('hidecur');
  if(!m.trail)clearTrail();
+ softApply();
 };
 OS.on('look',()=>M.apply());
+
+/* ---- 軟體游標：平板外接滑鼠時，自己畫一個會跟著移動的游標 ---- */
+let sc=null,scKind='',scOn=false,scX=-99,scY=-99,scHide=true;
+const wantSoft=()=>S.mouse.soft==='on'||(S.mouse.soft==='auto'&&(navigator.maxTouchPoints||0)>0);
+function scEl(){
+ if(sc&&sc.isConnected)return sc;
+ const os=$('#os');if(!os)return null;
+ sc=document.createElement('div');sc.id='scur';sc.hidden=true;os.appendChild(sc);scKind='';return sc;
+}
+function scShape(kind){
+ const st=S.mouse.cur==='default'?'classic':S.mouse.cur;
+ if(kind==='text'){
+  const k=S.mouse.size,[f,l]=cols(),px=Math.round(24*k);
+  return {svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24"><path d="M8 3h8M8 21h8M12 3v18" stroke="${l}" stroke-width="4" stroke-linecap="round"/><path d="M8 3h8M8 21h8M12 3v18" stroke="${f}" stroke-width="1.8" stroke-linecap="round"/></svg>`,hx:Math.round(px/2),hy:Math.round(px/2)};
+ }
+ if(kind==='move'){
+  const k=S.mouse.size,[f,l]=cols(),px=Math.round(24*k),d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3";
+  return {svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24"><path d="${d}" fill="none" stroke="${l}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${f}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,hx:Math.round(px/2),hy:Math.round(px/2)};
+ }
+ return M.shape(st,kind==='hand'?'hand':'arrow');
+}
+function scKindOf(t){
+ let c='';try{c=t&&t.nodeType===1?getComputedStyle(t).cursor:''}catch(e){}
+ if(/(^|,\s*)pointer\s*$/.test(c)||/\bgrab/.test(c))return 'hand';
+ if(/\btext\s*$/.test(c))return 'text';
+ if(/resize|move|all-scroll/.test(c))return 'move';
+ return 'arrow';
+}
+function scDraw(kind){
+ const el=scEl();if(!el)return;
+ if(kind!==scKind){const sh=scShape(kind);scKind=kind;el.innerHTML=sh.svg;el._hx=sh.hx;el._hy=sh.hy}
+}
+function scMove(e){
+ if(!scOn)return;
+ if(e.pointerType!=='mouse'&&e.pointerType!=='pen'){scHideNow();return}
+ const el=scEl();if(!el)return;
+ const t=e.target;
+ if(t&&t.tagName==='IFRAME'){scHideNow();return}
+ scDraw(scKindOf(t));
+ scX=e.clientX;scY=e.clientY;
+ el.style.transform=`translate(${scX-(el._hx||0)}px,${scY-(el._hy||0)}px)`;
+ if(el.hidden)el.hidden=false;
+}
+function scHideNow(){if(sc)sc.hidden=true}
+function softApply(){
+ const os=$('#os');if(!os)return;
+ const on=wantSoft();
+ if(on!==scOn){scOn=on;os.classList.toggle('softcur',on);if(!on)scHideNow()}
+ if(on){scKind='';if(sc&&!sc.hidden){scDraw(scKindOf(document.elementFromPoint(scX,scY)));sc.style.transform=`translate(${scX-(sc._hx||0)}px,${scY-(sc._hy||0)}px)`}}
+}
+document.addEventListener('pointermove',scMove,true);
+document.addEventListener('pointerdown',e=>{if(scOn){if(e.pointerType==='touch')scHideNow();else scMove(e)}},true);
+document.addEventListener('pointerout',e=>{if(!e.relatedTarget)scHideNow()},true);
+document.addEventListener('mouseleave',scHideNow);
+addEventListener('blur',scHideNow);
+OS.on('look',()=>{if(sc&&!sc.hidden){scKind=''}});
 
 /* ---- 點擊波紋與位置提示 ---- */
 let lastX=innerWidth/2,lastY=innerHeight/2,ripples=0;

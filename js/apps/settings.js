@@ -48,7 +48,7 @@ const GROUPS=[
  ['帳戶與時間',[['accounts','你的資訊','user'],['time','日期與時間','clock'],['access','協助工具','star'],['privacy','隱私權與安全性','shield']]],
  ['',[['update','軟體更新','refresh2']]]
 ];
-const KW={display:'亮度 夜間光 深色 文字大小 縮放 全螢幕',sound:'音量 靜音 音效 喇叭',notif:'通知 橫幅 專注 勿擾',power:'睡眠 關機 重新啟動 鎖定 閒置 節電',storage:'儲存 磁碟 空間 資源回收筒',about:'關於 裝置 版本 規格 重設 電腦名稱 重新安裝',bluetooth:'藍牙 耳機',mouse:'滑鼠 指標 游標 軌跡 雙擊 波紋 cursor mouse pointer',network:'網路 wifi 無線 飛航',wallpaper:'背景 桌布 圖片',color:'色彩 主題 強調色 深色 淺色',taskbar:'工作列 對齊 搜尋',start:'開始 選單 釘選',deskicons:'桌面 圖示 排列',apps:'應用程式 解除安裝 程式',startup:'啟動 開機 自動',accounts:'帳戶 名稱 密碼 大頭貼 登入',time:'時間 日期 時區 24 小時',access:'協助 文字 對比 動畫',privacy:'隱私 相機 麥克風 紀錄',update:'更新 版本 下載 安裝 qeneos'};
+const KW={display:'亮度 夜間光 深色 文字大小 縮放 全螢幕',sound:'音量 靜音 音效 喇叭',notif:'通知 橫幅 專注 勿擾',power:'睡眠 關機 重新啟動 鎖定 閒置 節電',storage:'儲存 磁碟 空間 資源回收筒',about:'恢復出廠設置 重設 重置 reset 關於 裝置 版本 規格 重設 電腦名稱 重新安裝',bluetooth:'藍牙 耳機',mouse:'滑鼠 指標 游標 軌跡 雙擊 波紋 cursor mouse pointer',network:'網路 wifi 無線 飛航',wallpaper:'背景 桌布 圖片',color:'色彩 主題 強調色 深色 淺色',taskbar:'工作列 對齊 搜尋',start:'開始 選單 釘選',deskicons:'桌面 圖示 排列',apps:'應用程式 解除安裝 程式',startup:'啟動 開機 自動',accounts:'帳戶 名稱 密碼 大頭貼 登入',time:'時間 日期 時區 24 小時',access:'協助 文字 對比 動畫',privacy:'隱私 相機 麥克風 紀錄',update:'更新 版本 下載 安裝 qeneos'};
 OS.settingsIndex=()=>{const o=[];GROUPS.forEach(([g,l])=>l.forEach(([id,n])=>o.push({id,name:n,kw:KW[id]||''})));return o};
 const ALIAS={personal:'wallpaper'};
 
@@ -102,7 +102,7 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
   P.about=()=>{
    const mem=navigator.deviceMemory?navigator.deviceMemory+' GB':'未知',cores=navigator.hardwareConcurrency||'?';
    return grp(row('裝置名稱',esc(S.pcName),btn('renpc','重新命名')))+grp(`<div class="sr1 col"><b>裝置規格</b><table class="ptab"><tr><th>處理器</th><td>${cores} 個邏輯核心</td></tr><tr><th>記憶體</th><td>${mem}（瀏覽器回報）</td></tr><tr><th>系統類型</th><td>QeneOS ${esc(S.ver)}（網頁模擬）</td></tr><tr><th>顯示器</th><td>${screen.width} × ${screen.height}</td></tr><tr><th>瀏覽器</th><td>${esc((navigator.userAgent.match(/(Chrome|Firefox|Safari|Edg)\/[\d.]+/)||['未知'])[0])}</td></tr><tr><th>安裝日期</th><td>${S.instDate?OS.fmtDateShort(new Date(S.instDate)):'—'}</td></tr></table></div>`)+
-   grp(row('重設此電腦','刪除所有檔案、設定與已安裝的應用程式，然後重新安裝 QeneOS',btn('reset','重設電腦','dng')))+note('這是網頁模擬器，不是真正的作業系統，所有資料都只存在這個瀏覽器。');
+   grp(row('恢復出廠設置','刪除所有檔案、設定與已安裝的應用程式，讓電腦回到剛安裝完的狀態',btn('reset','恢復出廠設置','dng')))+note('這是網頁模擬器，不是真正的作業系統，所有資料都只存在這個瀏覽器。');
   };
   P.bluetooth=()=>grp(tg('bt','藍牙',OS.btOn()?'已開啟':'已關閉')+(OS.btOn()?row('青魚耳機 Pro',S.btDev?'已連線':'已配對',`<button type="button" class="tg${S.btDev?' on':''}" role="switch" aria-checked="${!!S.btDev}" aria-label="青魚耳機 Pro" data-tg="btDev"></button>`):''))+(S.airplane?note('飛航模式已開啟，藍牙無法使用。'):'');
   P.mouse=()=>{
@@ -111,6 +111,7 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
     row('指標樣式','',seg('mouse.cur',[['default','系統預設'],['classic','經典'],['fish','青魚'],['dot','圓點']]))+
     row('指標大小','',seg('mouse.size',[[1,'1×'],[1.5,'1.5×'],[2,'2×'],[2.5,'2.5×'],[3,'3×']]))+
     row('指標色彩','',`<div class="sswc">${[['white','#ffffff'],['black','#0d1b20'],['accent',S.accent],['yellow','#ffd23f'],['red','#ff4d4d']].map(([v,c])=>`<button type="button" class="${m.color===v?'on':''}" data-sg="mouse.color" data-v="${v}" style="background:${c}" aria-label="${v}" title="${{white:'白色',black:'黑色',accent:'強調色',yellow:'黃色',red:'紅色'}[v]}"></button>`).join('')}</div>`))+
+   grp(row('軟體游標','平板或觸控螢幕外接滑鼠時，由系統自己畫一個會跟著移動的游標',seg('mouse.soft',[['auto','自動'],['on','開啟'],['off','關閉']])))+
    grp(tg('mouse.ripple','顯示點擊波紋','按下滑鼠時在指標位置顯示圓形動畫')+tg('mouse.locate','按 Ctrl 鍵顯示指標位置','單獨按一下 Ctrl，指標位置會出現收縮的圓圈')+tg('mouse.trail','顯示指標軌跡','移動時留下一道漸漸淡去的軌跡')+(m.trail?row('軌跡長度','',rng('mouse.trailLen',4,30,1,'n')):'')+tg('mouse.hideTyping','輸入時隱藏指標','在文字欄位打字時隱藏指標，移動滑鼠就會回來')+tg('mouse.shake','搖動視窗標題列以最小化其他視窗','按住標題列左右快速搖動；再搖一次可還原'))+
    grp(row('雙擊速度','兩次點擊的間隔在這個時間內，就算雙擊',rng('mouse.dbl',200,900,10,'ms'))+`<div class="sr1 col"><b>測試雙擊速度</b><div class="dbltest" data-dbltest><span class="dtf">${OS.fileIcon(FS.get('documents'),44)}</span><small class="dtm">在資料夾上快速點兩下</small></div></div>`)+
    grp(row('捷徑','',`<small class="mut">滑鼠滾輪滾過工作列右側的音量圖示可調整音量；在工作列按鈕上按滑鼠中鍵可關閉視窗。</small>`)+row('還原預設','',btn('mouse-reset','還原滑鼠設定')));
@@ -167,13 +168,13 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
    renderNav();
    pc.innerHTML=(P[page]||P.home)();
    pc.scrollTop=top;
-   root.classList.toggle('inpage',page!=='home'||root.classList.contains('narrow')&&!!root.dataset.open);
+   root.classList.toggle('inpage',page!=='home'||root.classList.contains('narrow')&&!!root.dataset.pgo);
    if(page==='storage'&&navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(e=>{const el=$('.qest',pc);if(el&&e&&e.quota)el.textContent='已使用 '+OS.U.fmtSize(e.usage||0)+'，可用上限約 '+OS.U.fmtSize(e.quota)}).catch(()=>{const el=$('.qest',pc);if(el)el.textContent='無法取得'});
    else if(page==='storage'){const el=$('.qest',pc);if(el)el.textContent='瀏覽器不支援查詢'}
   }
   function go(id){
    if(!valid(id))id='home';
-   page=id;root.dataset.open='1';q='';sq.value='';pc.scrollTop=0;render();
+   page=id;root.dataset.pgo='1';q='';sq.value='';pc.scrollTop=0;render();
   }
   /* ---------- 設定值變更 ---------- */
   function after(path){
@@ -235,7 +236,7 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
    if(r.dataset.acci!=null){S.accent=r.value;after('accent');render()}
   });
   nav.addEventListener('click',e=>{const b=e.target.closest('[data-pg]');if(b)go(b.dataset.pg)});
-  $('.stbk',root).addEventListener('click',()=>{delete root.dataset.open;page='home';render()});
+  $('.stbk',root).addEventListener('click',()=>{delete root.dataset.pgo;page='home';render()});
   sq.addEventListener('input',()=>{q=sq.value.trim();renderNav()});
   sq.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){const r=OS.settingsIndex().filter(s=>(s.name+' '+s.kw).toLowerCase().includes(q.toLowerCase()));if(r[0])go(r[0].id)}else if(e.key==='Escape'){sq.value='';q='';renderNav()}});
   async function act(a){
@@ -312,9 +313,9 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
   ['upd','net','look','notes','fs','apps'].forEach(ev=>win.on(ev,()=>{if(['range'].includes(document.activeElement&&document.activeElement.type))return;if(ev==='look'&&document.activeElement&&document.activeElement.type==='color')return;render()}));
   win.on('tick',()=>{if(page==='time'&&!document.activeElement.closest('select'))render()});
   win.key(e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'){e.preventDefault();sq.focus();sq.select()}});
-  function narrow(){const n=win.body.clientWidth<600;root.classList.toggle('narrow',n);if(!n)delete root.dataset.open;root.classList.toggle('inpage',n&&!!root.dataset.open)}
+  function narrow(){const n=win.body.clientWidth<600;root.classList.toggle('narrow',n);if(!n)delete root.dataset.pgo;root.classList.toggle('inpage',n&&!!root.dataset.pgo)}
   narrow();
-  if(args&&args.page)root.dataset.open='1';
+  if(args&&args.page)root.dataset.pgo='1';
   narrow();render();
   return {
    focusEl:()=>sq,

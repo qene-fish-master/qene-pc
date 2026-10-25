@@ -257,6 +257,7 @@ function bindStart(){
   if(b=t.closest('[data-open]')){const id=b.dataset.open;startClose();OS.openNode(id);return}
   if(b=t.closest('[data-r]')){stRun(+b.dataset.r);return}
   if(t.closest('#stUser')){OS.menuUp($('#stUser'),[{label:'變更帳戶設定',ico:'user',fn:()=>{startClose();OS.open('settings',{page:'accounts'})}},{label:'鎖定',ico:'lock',fn:()=>{startClose();OS.lock()}},{label:'登出',fn:()=>{startClose();OS.signOut()}}]);return}
+  if(t.closest('#stOut')){startClose();OS.signOut();return}
   if(t.closest('#stPower')){OS.menuUp($('#stPower'),[{label:'睡眠',ico:'moon',fn:()=>{startClose();OS.sleep()}},{label:'關機',ico:'power',fn:()=>{startClose();OS.shutdown()}},{label:'重新啟動',ico:'refresh',fn:()=>{startClose();OS.restart()}}]);return}
  });
  st.addEventListener('contextmenu',e=>{

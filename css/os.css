@@ -373,3 +373,6 @@ input[type=range]{accent-color:var(--ac);cursor:var(--cur-hand,pointer)}
 .omode button.on{border-color:var(--ac);box-shadow:0 0 0 2px color-mix(in srgb,var(--ac) 30%,transparent)}
 .oobem{text-align:center}
 .oobeb .ispin{filter:none;color:var(--ac)}.oobeb .ispin i::after{background:var(--ac)}
+
+#scur{position:fixed;left:0;top:0;z-index:99999;pointer-events:none;will-change:transform;filter:drop-shadow(0 1px 2px #0006)}#scur[hidden]{display:none}#scur svg{display:block}
+#os.softcur,#os.softcur *{cursor:none!important}

@@ -56,7 +56,7 @@ async function finishUpdate(p){
 OS.reinstall=async()=>{
  const F=OS.flow;
  if(F.busy||OS.R.state!=='desktop')return;
- const ok=await OS.confirm('這會刪除這台電腦上的所有檔案、設定與已安裝的應用程式，然後重新安裝 QeneOS。這個動作無法復原。\n\n確定要重設嗎？',{title:'重設此電腦',ok:'重設',danger:true});
+ const ok=await OS.confirm('這會刪除這台電腦上的所有檔案、設定與已安裝的應用程式，然後重新安裝 QeneOS。這個動作無法復原。\n\n確定要恢復出廠設置嗎？',{title:'恢復出廠設置',ok:'恢復出廠設置',danger:true});
  if(!ok)return;
  F.busy=true;
  OS.closeAllPanels();OS.sfx('shutdown');

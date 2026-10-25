@@ -6,7 +6,7 @@ const ICON='<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9
 OS.register({id:'calendar',name:'行事曆',kw:'calendar 行事曆 日曆 行程 日期 事件',
  g:'linear-gradient(145deg,#6bb7ff,#2a62d9)',s:ICON,w:900,h:620,minW:420,minH:420,single:true,
  create(win){
-  const root=document.createElement('div');root.className='cal';win.body.appendChild(root);
+  const root=document.createElement('div');root.className='calapp';win.body.appendChild(root);
   const now=OS.parts();
   let y=now.y,m=now.m,sel=OS.dateKey(now);
   root.innerHTML=`<div class="calside"><div class="calnav"><button type="button" class="ab" data-c="today">今天</button><button type="button" class="ab" data-c="prev" aria-label="上個月">${OS.ico('chevU',15)}</button><button type="button" class="ab" data-c="next" aria-label="下個月">${OS.ico('chevD',15)}</button><b class="calt"></b></div><div class="calgrid"></div></div><div class="calday"><div class="caldh"><h3></h3><button type="button" class="btn pri" data-c="add">${OS.ico('plus',14)} 新增行程</button></div><div class="calev"></div></div>`;
