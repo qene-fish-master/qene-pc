@@ -9,6 +9,7 @@ const cityName=z=>(CITIES.find(c=>c[1]===z)||[z])[0];
 const SW=OS.R.sw={run:false,t:0,s:0,laps:[]};
 const TM=OS.R.tm={run:false,left:0,total:0,end:0,done:false};
 const swMs=()=>SW.t+(SW.run?performance.now()-SW.s:0);
+const tmFmt=left=>{const t=Math.ceil(Math.max(0,left)/1000);return pad(Math.floor(t/3600))+':'+pad(Math.floor(t/60)%60)+':'+pad(t%60)};
 const swFmt=ms=>pad(Math.floor(ms/60000))+':'+pad(Math.floor(ms/1000)%60)+'.'+pad(Math.floor(ms/10)%100);
 OS.on('tick',()=>{
  if(OS.R.state!=='desktop')return;
@@ -41,8 +42,7 @@ OS.register({id:'clock',name:'時鐘',kw:'clock alarm timer stopwatch world 時�
     body.innerHTML=`<div class="ckal">${S.alarms.map(a=>`<div class="ckai"><div><b>${esc(a.time)}</b><small>${esc(a.label||'鬧鐘')}${a.days&&a.days.length?'　每週 '+a.days.map(d=>OS.WDAYS[d]).join('、'):'　一次'}</small></div><button type="button" class="tg${a.on?' on':''}" role="switch" aria-checked="${!!a.on}" aria-label="啟用鬧鐘" data-tg="${a.id}"></button><button type="button" class="ab" data-ed="${a.id}" aria-label="編輯">${OS.ico('edit',14)}</button><button type="button" class="ab" data-del="${a.id}" aria-label="刪除">${OS.ico('trash',14)}</button></div>`).join('')||'<p class="empty-s">還沒有鬧鐘。</p>'}</div><div class="ckadd"><button type="button" class="btn pri" data-a="adda">${OS.ico('plus',14)} 新增鬧鐘</button></div>`;
    }else if(tab==='timer'){
     const left=TM.run?Math.max(0,TM.end-Date.now()):TM.left;
-    const h=Math.floor(left/3600000),m=Math.floor(left/60000)%60,s=Math.ceil(left/1000)%60;
-    body.innerHTML=`<div class="ckt2"><div class="ckbig" id="tmd">${pad(h)}:${pad(m)}:${pad(s%60)}</div>${!TM.run&&!TM.left?`<div class="ckset"><label>時<input class="inp" type="number" min="0" max="99" value="0" id="tmh"></label><label>分<input class="inp" type="number" min="0" max="59" value="5" id="tmm"></label><label>秒<input class="inp" type="number" min="0" max="59" value="0" id="tms"></label></div>`:`<div class="upbar ckpb"><i id="tmb" style="width:${TM.total?(1-left/TM.total)*100:0}%"></i></div>`}<div class="btnrow ckbr">${TM.run?'<button type="button" class="btn" data-a="tpause">暫停</button>':TM.left?'<button type="button" class="btn pri" data-a="tgo">繼續</button>':'<button type="button" class="btn pri" data-a="tgo">開始</button>'}${TM.run||TM.left?'<button type="button" class="btn" data-a="trst">重設</button>':''}</div>${TM.done?'<p class="okt">時間到了！</p>':''}</div>`;
+    body.innerHTML=`<div class="ckt2"><div class="ckbig" id="tmd">${tmFmt(left)}</div>${!TM.run&&!TM.left?`<div class="ckset"><label>時<input class="inp" type="number" min="0" max="99" value="0" id="tmh"></label><label>分<input class="inp" type="number" min="0" max="59" value="5" id="tmm"></label><label>秒<input class="inp" type="number" min="0" max="59" value="0" id="tms"></label></div>`:`<div class="upbar ckpb"><i id="tmb" style="width:${TM.total?(1-left/TM.total)*100:0}%"></i></div>`}<div class="btnrow ckbr">${TM.run?'<button type="button" class="btn" data-a="tpause">暫停</button>':TM.left?'<button type="button" class="btn pri" data-a="tgo">繼續</button>':'<button type="button" class="btn pri" data-a="tgo">開始</button>'}${TM.run||TM.left?'<button type="button" class="btn" data-a="trst">重設</button>':''}</div>${TM.done?'<p class="okt">時間到了！</p>':''}</div>`;
    }else{
     body.innerHTML=`<div class="ckt2"><div class="ckbig" id="swd">${swFmt(swMs())}</div><div class="btnrow ckbr"><button type="button" class="btn pri" data-a="swgo">${SW.run?'停止':'開始'}</button><button type="button" class="btn" data-a="swlap"${SW.run?'':' disabled'}>分圈</button><button type="button" class="btn" data-a="swrst"${!SW.run&&!SW.t?' disabled':''}>重設</button></div><div class="sgrp ckla">${SW.laps.map((l,i)=>`<div class="sr1"><span>第 ${SW.laps.length-i} 圈</span><em>${l}</em></div>`).join('')}</div></div>`;
    }
@@ -76,7 +76,7 @@ OS.register({id:'clock',name:'時鐘',kw:'clock alarm timer stopwatch world 時�
   });
   win.every(()=>{
    if(tab==='world')$$('.ckwt',root).forEach(e=>{e.textContent=OS.fmtTime(new Date(),true,e.dataset.z)});
-   else if(tab==='timer'&&TM.run){const left=Math.max(0,TM.end-Date.now()),h=Math.floor(left/3600000),m=Math.floor(left/60000)%60,s=Math.ceil(left/1000)%60;const d=$('#tmd',root);if(d)d.textContent=pad(h)+':'+pad(m)+':'+pad(s%60);const bb=$('#tmb',root);if(bb)bb.style.width=((1-left/TM.total)*100)+'%'}
+   else if(tab==='timer'&&TM.run){const left=Math.max(0,TM.end-Date.now());const d=$('#tmd',root);if(d)d.textContent=tmFmt(left);const bb=$('#tmb',root);if(bb)bb.style.width=((1-left/TM.total)*100)+'%'}
   },250);
   win.every(()=>{if(tab==='sw'&&SW.run){const d=$('#swd',root);if(d)d.textContent=swFmt(swMs())}},50);
   win.on('clockui',draw);
@@ -165,7 +165,7 @@ const NC=['#fff2a8','#ffd1dc','#c9f0d4','#cfe6ff','#e6d4ff','#ffe0b8'];
 const newNote=()=>{const n={id:uid(),text:'',c:0,x:null,y:null};S.stickies.push(n);OS.save();return n};
 OS.register({id:'stickies',name:'便利貼',kw:'sticky notes 便利貼 便條 備忘 筆記',store:true,cat:'life',desc:'把想法貼在桌面上',
  g:'linear-gradient(145deg,#ffe36b,#f0a81c)',s:'<path d="M5 4h14v11l-5 5H5zM14 20v-5h5"/>',w:300,h:300,minW:200,minH:160,
- key:a=>a&&a.id?a.id:null,
+ key:a=>a&&a.id?a.id:(a&&a.fresh?null:(S.stickies[0]?S.stickies[0].id:null)),
  create(win,args){
   let n=args&&args.id&&S.stickies.find(x=>x.id===args.id);
   if(!n){n=S.stickies.length&&!(args&&args.fresh)?S.stickies[0]:newNote();if(S.stickies.includes(n)&&args&&args.fresh)n=S.stickies[S.stickies.length-1]}

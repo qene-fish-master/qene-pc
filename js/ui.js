@@ -26,6 +26,7 @@ OS.fileIcon=(n,s)=>{
    if(n&&m[n.sys])g+=m[n.sys];
   }
  }else if(n.kind==='text')g=PAGE('<path d="M15 20h18M15 26h18M15 32h12" stroke="#5b7f86" stroke-width="2.2" stroke-linecap="round"/>');
+ else if(n.kind==='doc')g=PAGE('<rect x="14" y="18" width="20" height="4" rx="1" fill="#2f7fd0"/><path d="M14 27h20M14 32h20M14 37h12" stroke="#5b7f86" stroke-width="2.2" stroke-linecap="round"/>');
  else if(n.kind==='image')g=PAGE('<rect x="14" y="20" width="20" height="16" rx="2" fill="#bfe3ee"/><circle cx="20" cy="25" r="2.2" fill="#f4c95d"/><path d="M14 34l7-7 5 5 3-3 5 5v1a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2z" fill="#3aa08f"/>');
  else if(n.kind==='video')g=PAGE('<rect x="13" y="20" width="22" height="16" rx="3" fill="#7a5cd6"/><path d="M21 24l7 4-7 4z" fill="#fff"/>');
  else if(n.kind==='audio')g=PAGE('<path d="M20 34V22l11-2v12" fill="none" stroke="#d6456f" stroke-width="2.4" stroke-linecap="round"/><circle cx="18" cy="34" r="3" fill="#d6456f"/><circle cx="29" cy="32" r="3" fill="#d6456f"/>');
@@ -222,6 +223,7 @@ OS.openNode=(id,opt)=>{
  const bump=()=>{const r=OS.S.recent.filter(x=>x!==id);r.unshift(id);OS.S.recent=r.slice(0,12);OS.save()};
  if(n.kind==='app'){if(OS.apps[n.app]&&OS.appInstalled(n.app))OS.open(n.app);else OS.alert('這個捷徑指向的程式已被移除。',{title:'捷徑'});return true}
  if(n.kind==='text'){bump();OS.open('notepad',{id});return true}
+ if(n.kind==='doc'){bump();OS.open('writer',{id});return true}
  if(n.kind==='image'){bump();OS.open('photos',{id});return true}
  if(n.kind==='video'||n.kind==='audio'){bump();OS.open('media',{id});return true}
  OS.dialog({title:'開啟檔案',body:`<p class="dmsg">沒有可以開啟「${esc(n.name)}」的程式。要把檔案下載到你的實際電腦嗎？</p>`,buttons:[{id:'dl',label:'下載',primary:true},{id:'cancel',label:'取消'}]}).then(r=>{if(r==='dl')OS.FS.download(id)});

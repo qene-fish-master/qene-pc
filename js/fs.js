@@ -36,6 +36,7 @@ const EXT={
  text:'txt md json csv log js css html htm xml ini cfg yml yaml ts py c cpp h java sh bat tsv rtf'.split(' '),
  image:'png jpg jpeg gif webp bmp svg ico avif'.split(' '),
  video:'mp4 webm mov mkv ogv m4v'.split(' '),
+ doc:['qdoc'],
  audio:'mp3 wav ogg m4a flac aac oga opus'.split(' ')
 };
 FS.DN={desktop:'桌面',documents:'文件',pictures:'圖片',downloads:'下載',music:'音樂',videos:'影片',bin:'資源回收筒',users:'使用者',root:'本機 (C:)'};
@@ -52,7 +53,7 @@ FS.kindOf=(name,mime)=>{
  if(mime.startsWith('text/'))return 'text';
  return 'other';
 };
-FS.KIND={dir:'檔案資料夾',text:'文字文件',image:'影像檔案',video:'影片檔案',audio:'音訊檔案',app:'捷徑',other:'檔案'};
+FS.KIND={dir:'檔案資料夾',doc:'青魚文件',text:'文字文件',image:'影像檔案',video:'影片檔案',audio:'音訊檔案',app:'捷徑',other:'檔案'};
 FS.typeName=n=>{
  if(n.type==='dir')return n.sys==='root'?'本機磁碟':'檔案資料夾';
  const e=FS.ext(n.name).toUpperCase();

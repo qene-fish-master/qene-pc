@@ -74,7 +74,7 @@ OS.register({id:'settings',name:'設定',kw:'settings control panel 設定 控�
   const row=(t,d,c)=>`<div class="sr1"><div class="sr1t"><b>${t}</b>${d?`<small>${d}</small>`:''}</div><div class="sr1c">${c||''}</div></div>`;
   const grp=h=>`<div class="sgrp">${h}</div>`;
   const seg=(p,o)=>`<div class="sseg" role="radiogroup">${o.map(([v,l])=>`<button type="button" role="radio" aria-checked="${get(p)===v}" class="${get(p)===v?'on':''}" data-sg="${p}" data-v="${v}">${l}</button>`).join('')}</div>`;
-  const rng=(p,min,max,step,fmt,val)=>{const v=val==null?get(p):val;return `<span class="srg"><input type="range" min="${min}" max="${max}" step="${step||1}" value="${v}" data-rg="${p}" data-fmt="${fmt||''}" aria-label="${esc(p)}"><em>${fmtv(fmt,v)}</em></span>`};
+  const rng=(p,min,max,step,fmt,val)=>{const v=val==null?get(p):val;return `<span class="srg"><input type="range" min="${min}" max="${max}" step="${step||1}" value="${v}" data-rg="${p}" data-fmt="${fmt||''}" aria-label="${esc(p)}"><em>${fmtv(fmt,fmt==='pct'?v/100:v)}</em></span>`};
   const fmtv=(f,v)=>f==='pct'?Math.round(v*100)+'%':f==='ms'?v+' 毫秒':f==='x'?v+'×':f==='n'?String(v):f==='vol'?v+'%':v;
   const btn=(a,l,cls,dis)=>`<button type="button" class="btn${cls?' '+cls:''}" data-act="${a}"${dis?' disabled':''}>${l}</button>`;
   const sel=(p,o)=>`<select class="inp" data-sl="${p}" aria-label="${esc(p)}">${o.map(([v,l])=>`<option value="${esc(v)}"${String(get(p))===String(v)?' selected':''}>${esc(l)}</option>`).join('')}</select>`;

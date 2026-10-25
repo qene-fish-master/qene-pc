@@ -86,7 +86,7 @@ OS.register({id:'calc',name:'計算機',kw:'calculator calc 計算機 算數 數
   function lastNum(){const m=expr.match(/[0-9.]+(?:%|!)*$/);return m?m[0]:''}
   function press(k){
    if(justEq&&!OPS.includes(k)&&!['%','!','1/x','x²'].includes(k)&&k!=='='){if(/^[0-9.πe(√]$/.test(k)||/^(sin|cos|tan|ln|log)$/.test(k)||k==='±'){expr='';}}
-   if(k!=='=')justEq=justEq&&(OPS.includes(k)||['%','!','1/x','x²','⌫','CE','C','±'].includes(k));
+   if(k!=='=')justEq=justEq&&(['%','!','1/x','x²','⌫','CE','C','±'].includes(k));
    if(/^[0-9]$/.test(k)){expr+=k}
    else if(k==='.'){const n=lastNum();if(n.includes('.')&&!/[%!]$/.test(n))return;expr+=(n&&!/[%!]$/.test(n)?'.':'0.')}
    else if(OPS.includes(k)){
@@ -101,7 +101,7 @@ OS.register({id:'calc',name:'計算機',kw:'calculator calc 計算機 算數 數
    else if(k==='±'){
     if(!expr)return;
     const m=expr.match(/(−?)([0-9.]+(?:%|!)*)$/);
-    if(m){const before=expr.slice(0,expr.length-m[0].length);expr=m[1]?before+m[2]:(before.slice(-1)==='−'&&before.length>1&&/[0-9)]/.test(before.slice(-2,-1))?before.slice(0,-1)+'+'+m[2]:before+'−'+m[2])}
+    if(m){const before=expr.slice(0,expr.length-m[0].length);expr=m[1]?(/[0-9)πe%!]$/.test(before)?before+'+'+m[2]:before+m[2]):before+'−'+m[2]}
    }
    else if(k==='%'||k==='!'){if(/[0-9)πe%!]$/.test(expr))expr+=k}
    else if(k==='x²'){if(/[0-9)πe]$/.test(expr)||(justEq&&expr))expr='('+expr+')^2'}

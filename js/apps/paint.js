@@ -116,7 +116,7 @@ OS.register({id:'paint',name:'小畫家',kw:'paint draw 小畫家 繪圖 畫圖 
   function floodFill(x,y,col){
    if(x<0||y<0||x>=cv.width||y>=cv.height)return;
    const im=ctx.getImageData(0,0,cv.width,cv.height),d=new Uint32Array(im.data.buffer),w=cv.width,h=cv.height;
-   const [r,g,b]=hex2rgb(col),target=(255<<24)|(b<<16)|(g<<8)|r,from=d[y*w+x];
+   const [r,g,b]=hex2rgb(col),target=((255<<24)|(b<<16)|(g<<8)|r)>>>0,from=d[y*w+x];
    if(from===target)return;
    const st=[x,y];
    while(st.length){

@@ -23,7 +23,7 @@ OS.register({id:'explorer',name:'檔案總管',kw:'explorer files folder file ma
  g:'linear-gradient(145deg,#ffd45e,#e0931f)',s:FOLDER,w:920,h:580,minW:520,minH:340,
  create(win,args){
   const root=document.createElement('div');root.className='xp';win.body.appendChild(root);
-  let loc='home',hist=[],hi=-1,sel=new Set(),anchor=null,query='',renaming=null,pendingRefresh=false;
+  let anc0=null;let loc='home',hist=[],hi=-1,sel=new Set(),anchor=null,query='',renaming=null,pendingRefresh=false;
   let sortKey='name',sortDir=1,view=S.view.explorer||'details',lastClick={id:null,t:0},typeBuf='',typeT=0;
   const isPc=()=>loc==='pc',isBin=()=>loc==='bin';
   const valid=l=>l==='pc'||(FS.get(l)&&FS.get(l).type==='dir');
@@ -177,7 +177,7 @@ OS.register({id:'explorer',name:'檔案總管',kw:'explorer files folder file ma
    else if(k==='props'){if(ids.length===1)OS.props(ids[0])}
    else if(k==='empty')emptyBin();else if(k==='restore')restoreSel();else if(k==='restoreall')restoreAll();
   });
-  const newItems=()=>[{label:'資料夾',ico:'folderplus',fn:()=>mkNew('folder')},{label:'文字文件',ico:'fileplus',fn:()=>mkNew('text')}];
+  const newItems=()=>[{label:'資料夾',ico:'folderplus',fn:()=>mkNew('folder')},{label:'文字文件',ico:'fileplus',fn:()=>mkNew('text')},{label:'青魚文件',ico:'fileplus',fn:()=>mkNew('doc')}];
   const sortItems=()=>{
    const ks=isBin()?[['name','名稱'],['loc','原始位置'],['del','刪除日期'],['size','大小']]:[['name','名稱'],['date','修改日期'],['type','類型'],['size','大小']];
    return ks.map(([k,l])=>({label:l,radio:1,on:sortKey===k,fn:()=>{sortKey=k;render()}})).concat([{sep:1},{label:'遞增',radio:1,on:sortDir>0,fn:()=>{sortDir=1;render()}},{label:'遞減',radio:1,on:sortDir<0,fn:()=>{sortDir=-1;render()}}]);
@@ -258,12 +258,13 @@ OS.register({id:'explorer',name:'檔案總管',kw:'explorer files folder file ma
   c.addEventListener('drop',e=>{c.classList.remove('dropok');if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length){e.preventDefault();doImport([...e.dataTransfer.files])}});
   /* ---------- 選取與滑鼠操作 ---------- */
   function setSel(ids,keepAnchor){
-   sel=new Set(ids);if(!keepAnchor)anchor=ids.length?ids[ids.length-1]:null;
+   sel=new Set(ids);if(!keepAnchor){anc0=null}if(!keepAnchor)anchor=ids.length?ids[ids.length-1]:null;
    $$('.xi',c).forEach(el=>el.classList.toggle('sel',sel.has(el.dataset.id)));
    updStatus();updBar();
   }
   const order=()=>$$('.xi',c).map(e=>e.dataset.id);
   c.addEventListener('pointerdown',e=>{
+   anc0=null;
    if(e.target.closest('input'))return;
    if(e.target.closest('.xh'))return;
    const el=e.target.closest('.xi'),id=el&&el.dataset.id;
@@ -314,6 +315,7 @@ OS.register({id:'explorer',name:'檔案總管',kw:'explorer files folder file ma
     m=[{label:'開啟',dis:!one,fn:()=>openId(ids[0])},
      one&&n.type==='dir'?{label:'在新視窗中開啟',fn:()=>OS.open('explorer',{path:n.id})}:null,
      one&&n.type==='file'&&n.kind==='text'?{label:'用記事本編輯',fn:()=>OS.open('notepad',{id:n.id})}:null,
+     one&&n.type==='file'&&(n.kind==='text'||n.kind==='doc')?{label:'用青魚文書開啟',fn:()=>OS.open('writer',{id:n.id})}:null,
      one&&n.type==='file'&&n.kind==='image'?{label:'設為桌面背景',ico:'image',fn:()=>OS.setWallFromNode(n.id)}:null,
      one&&n.type==='file'&&n.kind!=='app'?{label:'下載到實際電腦',ico:'download',fn:()=>FS.download(n.id)}:null,
      one&&n.type==='dir'?{label:'在此開啟終端機',fn:()=>OS.open('terminal',{cwd:n.id})}:null,
@@ -405,11 +407,11 @@ OS.register({id:'explorer',name:'檔案總管',kw:'explorer files folder file ma
    });
    if(!best)return;
    const id=best.dataset.id;
-   if(ext){const o=order(),a=o.indexOf(anchor0()),b=o.indexOf(id);const [x,y]=a<b?[a,b]:[b,a];sel=new Set(o.slice(x,y+1));setSel([...sel],true);anchor=id}
+   if(ext){if(!anc0)anc0=anchor;const o=order(),a=o.indexOf(anchor0()),b=o.indexOf(id);const [x,y]=a<b?[a,b]:[b,a];sel=new Set(o.slice(x,y+1));setSel([...sel],true);anchor=id}
    else setSel([id]);
    best.scrollIntoView({block:'nearest'});
   }
-  let anc0=null;const anchor0=()=>anc0||anchor;
+  const anchor0=()=>anc0||anchor;
   win.key(e=>{
    if(U_typing(e.target)&&!e.target.classList.contains('xpc'))return;
    const k=e.key,ctrl=e.ctrlKey||e.metaKey,lk=k.toLowerCase();

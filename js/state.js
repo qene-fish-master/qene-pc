@@ -11,7 +11,7 @@ const D={
  focus:false,notif:true,banner:true,nsound:true,
  h24:true,tz:'',showSec:false,weekStart:0,
  tbAlign:'center',tbSearch:true,tbTaskView:true,tbPinned:['explorer','browser','store','settings'],
- startPinned:['explorer','browser','notepad','paint','calc','terminal','photos','camera','media','games','store','settings','taskmgr'],
+ startPinned:['explorer','browser','notepad','writer','paint','calc','terminal','photos','camera','media','games','store','settings','taskmgr'],
  startRecent:true,recent:[],
  deskSys:{pc:true,bin:true,user:false},iconSize:'m',showDeskIcons:true,autoArrange:false,align:true,iconPos:{},sortBy:'name',
  fs:16,abold:false,acon:false,anomo:false,saver:false,

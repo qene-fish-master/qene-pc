@@ -76,7 +76,7 @@ OS.register({id:'notepad',name:'記事本',kw:'notepad text editor 記事本 文
   function findNext(back,keepFocus){
    const n=needle();if(!n){f1.focus();return false}
    const h=hay();let i;
-   if(back){i=h.lastIndexOf(n,Math.max(0,ta.selectionStart-1));if(i<0||(i===ta.selectionStart&&ta.selectionStart===0&&false))i=h.lastIndexOf(n)}
+   if(back){i=h.lastIndexOf(n,Math.max(0,ta.selectionStart-1));if(i<0||(i===ta.selectionStart&&ta.selectionStart===0))i=h.lastIndexOf(n)}
    else{i=h.indexOf(n,ta.selectionEnd);if(i<0)i=h.indexOf(n)}
    if(i<0){fm.textContent='找不到';fm.classList.add('bad');return false}
    ta.focus();ta.setSelectionRange(i,i+n.length);

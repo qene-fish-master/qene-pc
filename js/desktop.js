@@ -34,6 +34,7 @@ OS.paste=dest=>{
 OS.newItem=(dest,kind)=>{
  try{
   if(kind==='folder')return FS.mkdir(dest,'新增資料夾',true);
+  if(kind==='doc')return FS.create({parent:dest,name:'新增青魚文件.qdoc',text:'',unique:true,kind:'doc'});
   return FS.create({parent:dest,name:'新增文字文件.txt',text:'',unique:true,kind:'text'});
  }catch(e){OS.alert(e.message,{title:'無法建立',kind:'err'});return null}
 };
@@ -356,7 +357,8 @@ function deskMenu(e){
   {sep:1},
   {label:'新增',sub:[
    {label:'資料夾',ico:'folderplus',fn:()=>{const n=OS.newItem('desktop','folder');if(n)placeAt(n,e);}},
-   {label:'文字文件',ico:'fileplus',fn:()=>{const n=OS.newItem('desktop','text');if(n)placeAt(n,e);}}
+   {label:'文字文件',ico:'fileplus',fn:()=>{const n=OS.newItem('desktop','text');if(n)placeAt(n,e);}},
+   {label:'青魚文件',ico:'fileplus',fn:()=>{const n=OS.newItem('desktop','doc');if(n)placeAt(n,e);}}
   ]},
   {sep:1},
   {label:'在此開啟終端機',fn:()=>OS.open('terminal',{cwd:'desktop'})},
